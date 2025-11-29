@@ -15,6 +15,13 @@
     "declarationMap": true,
     "sourceMap": true,
     "forceConsistentCasingInFileNames": true,
+  "exclude": [
+    "cypress",
+    "**/*.cy.ts",
+    "**/*.cy.tsx",
+    "**/*.test.ts",
+    "**/*.test.tsx"
+  ]
     "esModuleInterop": true,
     "types": ["node", "jest", "@testing-library/jest-dom"],
     "baseUrl": ".",
