@@ -9,7 +9,7 @@ import { CourseService } from '@/services/course.service';
 import { useUnenrollCourse } from '@/hooks/useUnenrollCourse';
 import { CourseDetail } from '@/components/courses/CourseDetail';
 import { EnrollmentForm } from '@/components/courses/CourseFilters';
-import type { Course, Lecture } from '@/services/course.service';
+import type { Course, Lecture, CourseProgress } from '@/services/course.service';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
 
 export default function CourseDetailPage() {
@@ -21,7 +21,7 @@ export default function CourseDetailPage() {
   const [course, setCourse] = useState<Course | null>(null);
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [isEnrolled, setIsEnrolled] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState<CourseProgress | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEnrollForm, setShowEnrollForm] = useState(false);
@@ -34,38 +34,15 @@ export default function CourseDetailPage() {
     unenrollMutation.mutate(undefined, {
       onSuccess: () => {
         setIsEnrolled(false);
-        setProgress(0);
+        setProgress(null);
       },
       onError: (err: any) => {
         setError(err?.message || 'Failed to unenroll');
       },
-    mutationKey: ['enroll', courseId],
-    mutationFn: async () => {
-      const enrollment = await CourseService.enrollCourse(courseId);
-      return enrollment;
-    },
-    onMutate: async () => {
-      setIsEnrolling(true);
-      setError(null);
-    },
-    onSuccess: async () => {
-      setIsEnrolled(true);
-      setShowEnrollForm(false);
-      setProgress(0);
-      // Invalidate courses lists and featured caches if present
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['courses'] }),
-        queryClient.invalidateQueries({ queryKey: ['featured-courses'] }),
-      ]);
-    },
-    onError: (err: any) => {
-      setError(err?.message || 'Failed to enroll in course');
-    },
     });
   };
 
   const enrollMutation = useMutation({
-    mutationKey: ['enroll', courseId],
     mutationFn: async () => {
       const enrollment = await CourseService.enrollCourse(courseId);
       return enrollment;
@@ -112,7 +89,7 @@ export default function CourseDetailPage() {
 
           if (enrolled) {
             const progressData = await CourseService.getCourseProgress(courseId);
-            setProgress(progressData.percentageComplete || 0);
+            setProgress(progressData);
           }
         }
       } catch (err) {
@@ -199,7 +176,7 @@ export default function CourseDetailPage() {
             <CourseDetail
               course={course}
               lectures={lectures}
-              progress={isEnrolled ? progress : undefined}
+              progress={progress || undefined}
               isEnrolled={isEnrolled}
               onEnroll={() => setShowEnrollForm(!showEnrollForm)}
               onSelectLecture={handleSelectLecture}
@@ -246,27 +223,27 @@ export default function CourseDetailPage() {
                     <h3 className="text-lg font-bold text-white">Your Progress</h3>
                     <button
                       onClick={handleUnenroll}
-                      disabled={unenrollMutation.isLoading}
+                      disabled={unenrollMutation.isPending}
                       className="text-xs px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
                     >
-                      {unenrollMutation.isLoading ? 'Leaving…' : 'Unenroll'}
+                      {unenrollMutation.isPending ? 'Leaving…' : 'Unenroll'}
                     </button>
                   </div>
                   <div className="space-y-4">
                     <div>
                       <div className="flex justify-between mb-2">
                         <span className="text-gray-400">Overall</span>
-                        <span className="text-white font-semibold">{Math.round(progress)}%</span>
+                        <span className="text-white font-semibold">{Math.round(progress?.completionPercentage || 0)}%</span>
                       </div>
                       <div className="w-full bg-gray-700 rounded-full h-2">
                         <div
                           className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all"
-                          style={{ width: `${progress}%` }}
+                          style={{ width: `${progress?.completionPercentage || 0}%` }}
                         />
                       </div>
                     </div>
                     <p className="text-sm text-gray-400">
-                      Keep learning! {Math.round(100 - progress)}% of the course remaining
+                      Keep learning! {Math.round(100 - (progress?.completionPercentage || 0))}% of the course remaining
                     </p>
                     {error && (
                       <p className="text-xs text-red-400">{error}</p>
@@ -285,7 +262,7 @@ export default function CourseDetailPage() {
                   </div>
                   <div>
                     <p className="text-gray-400 text-sm">Students</p>
-                    <p className="text-white">{course.students || 0} enrolled</p>
+                    <p className="text-white">{course.studentCount || 0} enrolled</p>
                   </div>
                   <div>
                     <p className="text-gray-400 text-sm">Duration</p>
@@ -299,17 +276,17 @@ export default function CourseDetailPage() {
               </div>
 
               {/* Instructor Card */}
-              {course.instructor && (
+              {course.instructorName && (
                 <div className="bg-gray-800 rounded-lg p-6">
                   <h3 className="text-lg font-bold text-white mb-4">Instructor</h3>
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                       <span className="text-white font-bold">
-                        {course.instructor.charAt(0).toUpperCase()}
+                        {course.instructorName.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div>
-                      <p className="text-white font-semibold">{course.instructor}</p>
+                      <p className="text-white font-semibold">{course.instructorName}</p>
                       <p className="text-gray-400 text-sm">Instructor</p>
                     </div>
                   </div>
