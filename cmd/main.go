@@ -34,11 +34,12 @@ func getStorageDir() string {
 
 func getFFmpegPath() string {
 	if envPath := os.Getenv("FFMPEG_PATH"); envPath != "" {
-		if _, err := os.Stat(envPath); err == nil {
+		if _, statErr := os.Stat(envPath); statErr == nil {
 			log.Printf("      ✓ Using FFmpeg from FFMPEG_PATH: %s", envPath)
 			return envPath
+		} else {
+			log.Printf("⚠ FFMPEG_PATH is set but invalid (%s): %v", envPath, statErr)
 		}
-		log.Printf("⚠ FFMPEG_PATH is set but invalid (%s): %v", envPath, err)
 	}
 
 	if path, err := exec.LookPath("ffmpeg"); err == nil {

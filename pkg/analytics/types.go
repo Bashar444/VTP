@@ -253,8 +253,8 @@ type QueryRepository interface {
 	QueryPlaybackSessions(filters map[string]interface{}) ([]PlaybackSession, error)
 }
 
-// AnalyticsService combines storage and retrieval
-type AnalyticsService interface {
+// AnalyticsServiceInterface defines the interface for analytics operations
+type AnalyticsServiceInterface interface {
 	StorageRepository
 	QueryRepository
 	CollectEvent(event AnalyticsEvent) error

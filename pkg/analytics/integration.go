@@ -12,7 +12,7 @@ import (
 
 // StreamingEventListener listens for streaming events and records analytics
 type StreamingEventListener struct {
-	collector      *EventCollector
+	collector      *EventCollectorImpl
 	calculator     *MetricsCalculator
 	store          StorageRepository
 	logger         *log.Logger
@@ -22,7 +22,7 @@ type StreamingEventListener struct {
 
 // NewStreamingEventListener creates a listener for streaming events
 func NewStreamingEventListener(
-	collector *EventCollector,
+	collector *EventCollectorImpl,
 	calculator *MetricsCalculator,
 	store StorageRepository,
 	logger *log.Logger,
@@ -401,7 +401,7 @@ func (das *DashboardAlertSubscriber) GetRecentAlerts(limit int) []*PerformanceAl
 
 // AnalyticsService orchestrates all analytics components
 type AnalyticsService struct {
-	collector  *EventCollector
+	collector  *EventCollectorImpl
 	calculator *MetricsCalculator
 	store      StorageRepository
 	listener   *StreamingEventListener
