@@ -2,6 +2,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
 import { VideoPlayer } from '@/components/playback/VideoPlayer';
@@ -14,6 +15,7 @@ const PLAYBACK_SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
 export default function VideoPlaybackPage() {
   const params = useParams();
+  const t = useTranslations();
   const router = useRouter();
   const videoId = params?.videoId as string;
   const authStore = useAuthStore();
@@ -63,7 +65,7 @@ export default function VideoPlaybackPage() {
       <div className="flex items-center justify-center min-h-screen bg-gray-900">
         <div className="text-center">
           <Loader className="w-8 h-8 animate-spin text-blue-400 mx-auto mb-4" />
-          <p className="text-gray-400">Redirecting to login...</p>
+          <p className="text-gray-400">{t('video.redirect.login')}</p>
         </div>
       </div>
     );
@@ -76,14 +78,14 @@ export default function VideoPlaybackPage() {
         <div className="max-w-md w-full bg-gray-800 rounded-lg p-6">
           <div className="flex items-center gap-3 mb-4">
             <AlertCircle className="w-6 h-6 text-red-500" />
-            <h2 className="text-xl font-semibold text-white">Error Loading Video</h2>
+            <h2 className="text-xl font-semibold text-white">{t('video.error.loading')}</h2>
           </div>
           <p className="text-gray-400 mb-6">{error}</p>
           <button
             onClick={() => router.push('/courses')}
             className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
           >
-            Back to Courses
+            {t('video.error.back')}
           </button>
         </div>
       </div>
@@ -96,7 +98,7 @@ export default function VideoPlaybackPage() {
       <div className="flex items-center justify-center min-h-screen bg-gray-900">
         <div className="text-center">
           <Loader className="w-8 h-8 animate-spin text-blue-400 mx-auto mb-4" />
-          <p className="text-gray-400">Loading video...</p>
+          <p className="text-gray-400">{t('video.loading')}</p>
         </div>
       </div>
     );
@@ -129,13 +131,13 @@ export default function VideoPlaybackPage() {
               {/* Stats */}
               <div className="flex flex-wrap gap-6 text-sm text-gray-400 mb-4">
                 <div>
-                  <span className="text-gray-500">Duration:</span>
+                  <span className="text-gray-500">{t('video.duration')}:</span>
                   <span className="text-white ml-2 font-semibold">
-                    {Math.floor(video.duration / 60)} min
+                    {Math.floor(video.duration / 60)} دقيقة
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-500">Uploaded:</span>
+                  <span className="text-gray-500">{t('video.uploaded')}:</span>
                   <span className="text-white ml-2 font-semibold">
                     {new Date(video.createdAt).toLocaleDateString()}
                   </span>

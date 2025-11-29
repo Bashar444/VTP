@@ -2,6 +2,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { useStreamRoom } from '@/hooks/useStreamRoom';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
@@ -23,6 +24,7 @@ interface Participant {
 
 export default function StreamingPage() {
   const params = useParams();
+  const t = useTranslations();
   const router = useRouter();
   const roomId = params?.roomId as string;
   const authStore = useAuthStore();
@@ -167,7 +169,7 @@ export default function StreamingPage() {
       <div className="flex items-center justify-center min-h-screen bg-gray-900">
         <div className="text-center">
           <Loader className="w-8 h-8 animate-spin text-blue-400 mx-auto mb-4" />
-          <p className="text-gray-400">Redirecting to login...</p>
+          <p className="text-gray-400">{t('stream.loading.redirect')}</p>
         </div>
       </div>
     );
@@ -180,14 +182,14 @@ export default function StreamingPage() {
         <div className="max-w-md w-full bg-gray-800 rounded-lg p-6">
           <div className="flex items-center gap-3 mb-4">
             <AlertCircle className="w-6 h-6 text-red-500" />
-            <h2 className="text-xl font-semibold text-white">Connection Error</h2>
+            <h2 className="text-xl font-semibold text-white">{t('stream.error.connection')}</h2>
           </div>
           <p className="text-gray-400 mb-6">{error || mediasoupError}</p>
           <button
             onClick={() => router.push('/courses')}
             className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
           >
-            Go Back to Courses
+            {t('stream.error.back')}
           </button>
         </div>
       </div>
@@ -200,7 +202,7 @@ export default function StreamingPage() {
       <div className="flex items-center justify-center min-h-screen bg-gray-900">
         <div className="text-center">
           <Loader className="w-8 h-8 animate-spin text-blue-400 mx-auto mb-4" />
-          <p className="text-gray-400">Initializing streaming...</p>
+          <p className="text-gray-400">{t('stream.initializing')}</p>
         </div>
       </div>
     );
@@ -212,11 +214,11 @@ export default function StreamingPage() {
       <div className="max-w-7xl mx-auto mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Live Lecture</h1>
-            <p className="text-gray-400">Room ID: {roomId}</p>
+            <h1 className="text-3xl font-bold text-white mb-2">{t('stream.header.liveLecture')}</h1>
+            <p className="text-gray-400">{t('stream.header.roomId')}: {roomId}</p>
           </div>
           <div className="text-right">
-            <p className="text-gray-400">Instructor: {authStore.user?.firstName || 'Unknown'}</p>
+            <p className="text-gray-400">{t('stream.header.instructor')}: {authStore.user?.firstName || 'Unknown'}</p>
             <p className="text-gray-400">
               Connection: <span className="text-green-400">{isConnected ? 'Media' : 'Media…'} / {signalingConnected ? 'Signal' : 'Signal…'}</span>
             </p>

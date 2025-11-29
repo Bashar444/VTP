@@ -3,9 +3,11 @@
 import { FormEvent, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { LoginFormData, loginSchema } from '@/utils/validation.schemas';
+import { useTranslations } from 'next-intl';
 
 export const LoginForm = () => {
   const { login, isLoading } = useAuth();
+  const t = useTranslations();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -49,7 +51,7 @@ export const LoginForm = () => {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-          Email
+          {t('login.email')}
         </label>
         <input
           id="email"
@@ -67,7 +69,7 @@ export const LoginForm = () => {
 
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-          Password
+          {t('login.password')}
         </label>
         <input
           id="password"
@@ -94,7 +96,7 @@ export const LoginForm = () => {
           disabled={isLoading}
         />
         <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700">
-          Remember me
+          {t('login.remember')}
         </label>
       </div>
 
@@ -109,7 +111,7 @@ export const LoginForm = () => {
         disabled={isLoading}
         className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {isLoading ? 'Signing in...' : 'Sign in'}
+        {isLoading ? t('login.submitting') : t('login.submit')}
       </button>
     </form>
   );

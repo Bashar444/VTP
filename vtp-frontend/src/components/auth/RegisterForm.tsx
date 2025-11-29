@@ -3,9 +3,11 @@
 import { FormEvent, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { RegisterFormData, registerSchema } from '@/utils/validation.schemas';
+import { useTranslations } from 'next-intl';
 
 export const RegisterForm = () => {
   const { register, isLoading } = useAuth();
+  const t = useTranslations();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -61,7 +63,7 @@ export const RegisterForm = () => {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-            First Name
+            {t('register.firstName')}
           </label>
           <input
             id="firstName"
@@ -81,7 +83,7 @@ export const RegisterForm = () => {
 
         <div>
           <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-            Last Name
+            {t('register.lastName')}
           </label>
           <input
             id="lastName"
@@ -102,7 +104,7 @@ export const RegisterForm = () => {
 
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-          Email
+          {t('register.email')}
         </label>
         <input
           id="email"
@@ -120,7 +122,7 @@ export const RegisterForm = () => {
 
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-          Password
+          {t('register.password')}
         </label>
         <input
           id="password"
@@ -146,7 +148,7 @@ export const RegisterForm = () => {
           htmlFor="confirmPassword"
           className="block text-sm font-medium text-gray-700"
         >
-          Confirm Password
+          {t('register.confirmPassword')}
         </label>
         <input
           id="confirmPassword"
@@ -166,7 +168,7 @@ export const RegisterForm = () => {
 
       <div>
         <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-          Role
+          {t('register.role')}
         </label>
         <select
           id="role"
@@ -178,8 +180,8 @@ export const RegisterForm = () => {
           }`}
           disabled={isLoading}
         >
-          <option value="student">Student</option>
-          <option value="instructor">Instructor</option>
+          <option value="student">{t('register.role.student')}</option>
+          <option value="instructor">{t('register.role.instructor')}</option>
         </select>
         {errors.role && <p className="mt-1 text-sm text-red-600">{errors.role}</p>}
       </div>
@@ -195,7 +197,7 @@ export const RegisterForm = () => {
         disabled={isLoading}
         className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {isLoading ? 'Creating account...' : 'Create account'}
+        {isLoading ? t('register.submitting') : t('register.submit')}
       </button>
     </form>
   );

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Clock, Users, Star, ChevronDown, ChevronUp, Play, Lock, Check } from 'lucide-react';
 import CourseService, { Course, Lecture, CourseProgress } from '@/services/course.service';
 import { cn } from '@/utils/cn';
@@ -24,6 +25,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({
   isLoading = false,
   className,
 }) => {
+  const t = useTranslations();
   return (
     <div className={cn('bg-gray-800 rounded-lg overflow-hidden', className)}>
       {/* Cover Image */}
@@ -46,7 +48,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({
           <div className="flex flex-wrap gap-6 text-sm">
             {/* Instructor */}
             <div>
-              <p className="text-gray-500">Instructor</p>
+              <p className="text-gray-500">{t('course.info.instructor')}</p>
               <p className="text-white font-semibold">{course.instructorName}</p>
             </div>
 
@@ -56,18 +58,18 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({
                 <Star className="w-5 h-5 text-yellow-400" fill="currentColor" />
                 <span className="text-white font-semibold">{course.rating.toFixed(1)}</span>
               </div>
-              <span className="text-gray-400">({course.reviewCount} reviews)</span>
+              <span className="text-gray-400">({course.reviewCount} {t('reviews.count')})</span>
             </div>
 
             {/* Students */}
             <div className="flex items-center gap-2">
               <Users className="w-5 h-5 text-gray-400" />
-              <span className="text-gray-400">{course.studentCount} students</span>
+              <span className="text-gray-400">{course.studentCount} {t('nav.myCourses')}</span>
             </div>
 
             {/* Level */}
             <div>
-              <p className="text-gray-500">Level</p>
+              <p className="text-gray-500">{t('course.info.level')}</p>
               <p className="text-white font-semibold capitalize">{course.level}</p>
             </div>
           </div>
@@ -76,24 +78,24 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({
         {/* Course Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 p-4 bg-gray-900 rounded-lg">
           <div>
-            <p className="text-gray-400 text-sm">Duration</p>
+            <p className="text-gray-400 text-sm">{t('course.info.duration')}</p>
             <div className="flex items-center gap-2 text-white font-semibold mt-1">
               <Clock className="w-4 h-4" />
               <span>{Math.round(course.duration / 60)}h</span>
             </div>
           </div>
           <div>
-            <p className="text-gray-400 text-sm">Lectures</p>
+            <p className="text-gray-400 text-sm">{t('course.info.lectures')}</p>
             <p className="text-white font-semibold mt-1">{course.lectureCount}</p>
           </div>
           <div>
-            <p className="text-gray-400 text-sm">Category</p>
+            <p className="text-gray-400 text-sm">{t('course.info.category')}</p>
             <p className="text-white font-semibold mt-1 capitalize">{course.category}</p>
           </div>
           <div>
-            <p className="text-gray-400 text-sm">Price</p>
+            <p className="text-gray-400 text-sm">{t('course.info.price')}</p>
             <p className="text-white font-semibold mt-1">
-              {course.isFree ? 'Free' : `$${course.price}`}
+              {course.isFree ? t('course.price.free') : `$${course.price}`}
             </p>
           </div>
         </div>
@@ -102,7 +104,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({
         {isEnrolled && progress && (
           <div className="mb-6 p-4 bg-blue-900 bg-opacity-30 rounded-lg border border-blue-700">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-white font-semibold">Your Progress</span>
+              <span className="text-white font-semibold">{t('course.progress.title')}</span>
               <span className="text-blue-400 font-semibold">
                 {Math.round(progress.completionPercentage)}%
               </span>
@@ -114,7 +116,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({
               />
             </div>
             <p className="text-gray-400 text-sm mt-2">
-              {progress.completedLectures} of {progress.totalLectures} lectures completed
+              {progress.completedLectures} / {progress.totalLectures} {t('course.info.lectures')}
             </p>
           </div>
         )}
@@ -126,7 +128,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({
             disabled={isLoading}
             className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-bold rounded-lg transition-colors mb-6"
           >
-            {isLoading ? 'Enrolling...' : course.isFree ? 'Enroll Now' : `Enroll Now - $${course.price}`}
+            {isLoading ? t('course.enroll.processing') : course.isFree ? t('course.enroll.now') : `${t('course.enroll.now')} - $${course.price}`}
           </button>
         )}
       </div>
