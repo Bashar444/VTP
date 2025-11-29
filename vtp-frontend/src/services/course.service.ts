@@ -362,5 +362,6 @@ class CourseService {
     return response.data.enrolled;
   }
 }
-
-export default new CourseService();
+// Export both named and default for flexibility
+export const CourseService = new CourseService();
+export default CourseService;

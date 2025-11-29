@@ -338,5 +338,6 @@ class G5Service {
   }
 }
 
-// Export singleton instance
-export default new G5Service();
+// Export singleton instance in both named and default forms
+export const g5Service = new G5Service();
+export default g5Service;
