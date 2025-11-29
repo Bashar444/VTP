@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Star, Users, Clock, BarChart3, ChevronRight } from 'lucide-react';
 import { Course } from '@/services/course.service';
 import { cn } from '@/utils/cn';
@@ -21,6 +22,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   className,
 }) => {
   const [imageError, setImageError] = useState(false);
+  const t = useTranslations();
 
   const handleClick = () => {
     onSelect?.(course.id);
@@ -52,7 +54,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
               <Star className="w-4 h-4 text-yellow-400" fill="currentColor" />
               <span className="text-sm text-gray-300">{course.rating.toFixed(1)}</span>
             </div>
-            <span className="text-xs text-gray-400">{course.studentCount} students</span>
+            <span className="text-xs text-gray-400">{course.studentCount} {t('course.sidebar.students')}</span>
           </div>
         </div>
       </div>
@@ -119,11 +121,11 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           <div className="flex items-center gap-4 text-sm text-gray-400">
             <div className="flex items-center gap-1">
               <Clock className="w-4 h-4" />
-              <span>{Math.round(course.duration / 60)}h</span>
+              <span>{Math.round(course.duration / 60)}س</span>
             </div>
             <div className="flex items-center gap-1">
               <BarChart3 className="w-4 h-4" />
-              <span>{course.lectureCount} lectures</span>
+              <span>{course.lectureCount} {t('course.sidebar.lectures')}</span>
             </div>
           </div>
         </div>
@@ -132,7 +134,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
         {showProgress && progressPercentage > 0 && (
           <div className="mb-4">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-semibold text-gray-300">Progress</span>
+              <span className="text-xs font-semibold text-gray-300">{t('course.card.progress')}</span>
               <span className="text-xs text-gray-400">{Math.round(progressPercentage)}%</span>
             </div>
             <div className="w-full bg-gray-700 rounded-full h-2">
@@ -147,7 +149,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
         {/* Price or Status */}
         <div className="pt-3 border-t border-gray-700">
           {course.isFree ? (
-            <span className="text-sm font-semibold text-green-400">Free</span>
+            <span className="text-sm font-semibold text-green-400">{t('course.card.free')}</span>
           ) : (
             <span className="text-lg font-bold text-white">${course.price}</span>
           )}
@@ -209,8 +211,8 @@ export const CourseList: React.FC<CourseListProps> = ({
     return (
       <div className={cn('text-center py-12 text-gray-400', className)}>
         <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-50" />
-        <p className="text-lg">No courses found</p>
-        <p className="text-sm mt-1">Try adjusting your filters or search</p>
+        <p className="text-lg">{t('course.list.noCourses')}</p>
+        <p className="text-sm mt-1">{t('course.list.tryAdjust')}</p>
       </div>
     );
   }

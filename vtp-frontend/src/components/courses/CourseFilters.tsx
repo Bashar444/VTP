@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Search, X, Filter } from 'lucide-react';
+import { Search, Filter } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { useTranslations } from 'next-intl';
 
 interface CourseFiltersProps {
   onFilterChange?: (filters: CourseFilterState) => void;
@@ -22,55 +23,39 @@ export const CourseFilters: React.FC<CourseFiltersProps> = ({
   onSearch,
   className,
 }) => {
+  const t = useTranslations();
   const [filters, setFilters] = useState<CourseFilterState>({});
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const categories = ['Programming', 'Design', 'Business', 'Science', 'Language', 'Health'];
   const levels = ['Beginner', 'Intermediate', 'Advanced'];
   const sortOptions = [
-    { value: 'newest', label: 'Newest' },
-    { value: 'popular', label: 'Most Popular' },
-    { value: 'highest-rated', label: 'Highest Rated' },
-    { value: 'price-low', label: 'Price: Low to High' },
-    { value: 'price-high', label: 'Price: High to Low' },
+    { value: 'newest', labelKey: 'filters.sort.newest' },
+    { value: 'popular', labelKey: 'filters.sort.popular' },
+    { value: 'highest-rated', labelKey: 'filters.sort.highest-rated' },
+    { value: 'price-low', labelKey: 'filters.sort.price-low' },
+    { value: 'price-high', labelKey: 'filters.sort.price-high' },
   ];
 
+  const updateFilters = (partial: Partial<CourseFilterState>) => {
+    const newFilters = { ...filters, ...partial };
+    setFilters(newFilters);
+    onFilterChange?.(newFilters);
+  };
+
   const handleCategoryChange = (category: string) => {
-    const newFilters = {
-      ...filters,
-      category: filters.category === category ? undefined : category,
-    };
-    setFilters(newFilters);
-    onFilterChange?.(newFilters);
+    updateFilters({ category: filters.category === category ? undefined : category });
   };
-
   const handleLevelChange = (level: string) => {
-    const newFilters = {
-      ...filters,
-      level: filters.level === level ? undefined : level,
-    };
-    setFilters(newFilters);
-    onFilterChange?.(newFilters);
+    updateFilters({ level: filters.level === level ? undefined : level });
   };
-
   const handleSortChange = (sortBy: string) => {
-    const newFilters = {
-      ...filters,
-      sortBy: sortBy as CourseFilterState['sortBy'],
-    };
-    setFilters(newFilters);
-    onFilterChange?.(newFilters);
+    updateFilters({ sortBy: sortBy as CourseFilterState['sortBy'] });
   };
-
   const handleSearch = (query: string) => {
-    const newFilters = {
-      ...filters,
-      search: query,
-    };
-    setFilters(newFilters);
+    updateFilters({ search: query });
     onSearch?.(query);
   };
-
   const clearFilters = () => {
     setFilters({});
     onFilterChange?.({});
@@ -79,23 +64,20 @@ export const CourseFilters: React.FC<CourseFiltersProps> = ({
 
   return (
     <div className={cn('space-y-4', className)}>
-      {/* Search Bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
         <input
           type="text"
-          placeholder="Search courses..."
+          placeholder={t('filters.searchPlaceholder')}
           value={filters.search || ''}
           onChange={e => handleSearch(e.target.value)}
           className="w-full pl-10 pr-4 py-2.5 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
         />
       </div>
 
-      {/* Desktop Filters */}
       <div className="hidden lg:block space-y-4">
-        {/* Category Filter */}
         <div>
-          <h3 className="font-semibold text-white mb-3">Category</h3>
+          <h3 className="font-semibold text-white mb-3">{t('filters.category')}</h3>
           <div className="space-y-2">
             {categories.map(category => (
               <label key={category} className="flex items-center gap-2 cursor-pointer">
@@ -111,9 +93,8 @@ export const CourseFilters: React.FC<CourseFiltersProps> = ({
           </div>
         </div>
 
-        {/* Level Filter */}
         <div>
-          <h3 className="font-semibold text-white mb-3">Level</h3>
+          <h3 className="font-semibold text-white mb-3">{t('filters.level')}</h3>
           <div className="space-y-2">
             {levels.map(level => (
               <label key={level} className="flex items-center gap-2 cursor-pointer">
@@ -129,9 +110,8 @@ export const CourseFilters: React.FC<CourseFiltersProps> = ({
           </div>
         </div>
 
-        {/* Sort Options */}
         <div>
-          <h3 className="font-semibold text-white mb-3">Sort By</h3>
+          <h3 className="font-semibold text-white mb-3">{t('filters.sortBy')}</h3>
           <select
             value={filters.sortBy || 'newest'}
             onChange={e => handleSortChange(e.target.value)}
@@ -139,39 +119,34 @@ export const CourseFilters: React.FC<CourseFiltersProps> = ({
           >
             {sortOptions.map(option => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(option.labelKey)}
               </option>
             ))}
           </select>
         </div>
 
-        {/* Clear Filters */}
         {Object.keys(filters).length > 0 && (
           <button
             onClick={clearFilters}
             className="w-full py-2 px-4 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
           >
-            Clear Filters
+            {t('filters.clear')}
           </button>
         )}
       </div>
 
-      {/* Mobile Filters Button */}
       <div className="lg:hidden">
         <button
           onClick={() => setShowMobileFilters(!showMobileFilters)}
           className="w-full py-2.5 px-4 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
         >
           <Filter className="w-5 h-5" />
-          Filters
+          {t('filters.open')}
         </button>
-
-        {/* Mobile Filters Panel */}
         {showMobileFilters && (
           <div className="mt-3 p-4 bg-gray-800 rounded-lg space-y-4">
-            {/* Category */}
             <div>
-              <h3 className="font-semibold text-white mb-2">Category</h3>
+              <h3 className="font-semibold text-white mb-2">{t('filters.category')}</h3>
               <div className="grid grid-cols-2 gap-2">
                 {categories.map(category => (
                   <button
@@ -189,10 +164,8 @@ export const CourseFilters: React.FC<CourseFiltersProps> = ({
                 ))}
               </div>
             </div>
-
-            {/* Level */}
             <div>
-              <h3 className="font-semibold text-white mb-2">Level</h3>
+              <h3 className="font-semibold text-white mb-2">{t('filters.level')}</h3>
               <div className="grid grid-cols-3 gap-2">
                 {levels.map(level => (
                   <button
@@ -210,10 +183,8 @@ export const CourseFilters: React.FC<CourseFiltersProps> = ({
                 ))}
               </div>
             </div>
-
-            {/* Sort */}
             <div>
-              <h3 className="font-semibold text-white mb-2">Sort By</h3>
+              <h3 className="font-semibold text-white mb-2">{t('filters.sortBy')}</h3>
               <select
                 value={filters.sortBy || 'newest'}
                 onChange={e => handleSortChange(e.target.value)}
@@ -221,19 +192,17 @@ export const CourseFilters: React.FC<CourseFiltersProps> = ({
               >
                 {sortOptions.map(option => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.labelKey)}
                   </option>
                 ))}
               </select>
             </div>
-
-            {/* Clear Filters */}
             {Object.keys(filters).length > 0 && (
               <button
                 onClick={clearFilters}
                 className="w-full py-2 px-4 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition-colors"
               >
-                Clear Filters
+                {t('filters.clear')}
               </button>
             )}
           </div>
@@ -243,7 +212,6 @@ export const CourseFilters: React.FC<CourseFiltersProps> = ({
   );
 };
 
-// Enrollment Form Component
 interface EnrollmentFormProps {
   courseId: string;
   courseName: string;
@@ -265,39 +233,32 @@ export const EnrollmentForm: React.FC<EnrollmentFormProps> = ({
   isLoading = false,
   className,
 }) => {
+  const t = useTranslations();
   return (
     <div className={cn('bg-gray-800 rounded-lg p-6', className)}>
-      <h3 className="text-xl font-bold text-white mb-4">Enroll in this course</h3>
-
-      {/* Course Summary */}
+      <h3 className="text-xl font-bold text-white mb-4">{t('enroll.form.title')}</h3>
       <div className="mb-6 p-4 bg-gray-900 rounded-lg">
-        <p className="text-gray-400 text-sm mb-1">Course</p>
+        <p className="text-gray-400 text-sm mb-1">{t('enroll.form.courseLabel')}</p>
         <p className="text-white font-semibold">{courseName}</p>
       </div>
-
-      {/* Price Summary */}
       <div className="mb-6 space-y-3 p-4 bg-gray-900 rounded-lg">
         <div className="flex justify-between">
-          <span className="text-gray-400">Price</span>
-          <span className="text-white font-semibold">
-            {isFree ? 'Free' : `$${coursePrice}`}
-          </span>
+          <span className="text-gray-400">{t('enroll.form.price')}</span>
+          <span className="text-white font-semibold">{isFree ? t('enroll.form.free') : `$${coursePrice}`}</span>
         </div>
         {!isFree && (
           <>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Discount</span>
-              <span className="text-green-400">None</span>
+              <span className="text-gray-400">{t('enroll.form.discount')}</span>
+              <span className="text-green-400">{t('enroll.form.none')}</span>
             </div>
             <div className="border-t border-gray-700 pt-3 flex justify-between">
-              <span className="text-gray-300 font-semibold">Total</span>
+              <span className="text-gray-300 font-semibold">{t('enroll.form.total')}</span>
               <span className="text-white font-bold text-lg">${coursePrice}</span>
             </div>
           </>
         )}
       </div>
-
-      {/* Terms */}
       <div className="mb-6">
         <label className="flex items-start gap-3 cursor-pointer">
           <input
@@ -305,28 +266,26 @@ export const EnrollmentForm: React.FC<EnrollmentFormProps> = ({
             defaultChecked
             className="w-4 h-4 rounded border-gray-500 bg-gray-800 text-blue-600 mt-1"
           />
-          <span className="text-sm text-gray-300">
-            I agree to the course terms and conditions
-          </span>
+          <span className="text-sm text-gray-300">{t('enroll.form.terms')}</span>
         </label>
       </div>
-
-      {/* Actions */}
       <div className="space-y-3">
         <button
           onClick={onEnroll}
           disabled={isLoading}
           className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-bold rounded-lg transition-colors"
         >
-          {isLoading ? 'Processing...' : 'Enroll Now'}
+          {isLoading ? t('enroll.form.processing') : t('enroll.form.enrollNow')}
         </button>
         <button
           onClick={onCancel}
           className="w-full py-3 px-4 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-lg transition-colors"
         >
-          Cancel
+          {t('enroll.form.cancel')}
         </button>
       </div>
     </div>
   );
 };
+
+export { EnrollmentForm };

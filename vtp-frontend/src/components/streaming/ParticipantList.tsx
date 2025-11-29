@@ -1,5 +1,6 @@
 import { Users, Loader } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { useTranslations } from 'next-intl';
 
 interface Participant {
   id: string;
@@ -101,6 +102,8 @@ export const StreamingStatus: React.FC<StreamingStatusProps> = ({
   resolution,
   className,
 }) => {
+  const t = useTranslations();
+
   const formatDuration = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -108,20 +111,22 @@ export const StreamingStatus: React.FC<StreamingStatusProps> = ({
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const recordingText = t(`stream.participant.recordingStatus.${recordingStatus}`);
+
   return (
     <div className={cn('bg-gray-900 rounded-lg p-4 space-y-3', className)}>
       <div className="flex items-center justify-between">
-        <span className="text-gray-400">Stream Duration</span>
+        <span className="text-gray-400">{t('stream.participant.duration')}</span>
         <span className="text-white font-mono font-semibold">{formatDuration(duration)}</span>
       </div>
 
       <div className="flex items-center justify-between">
-        <span className="text-gray-400">Participants</span>
+        <span className="text-gray-400">{t('stream.participant.count')}</span>
         <span className="text-white font-semibold">{participantCount}</span>
       </div>
 
       <div className="flex items-center justify-between">
-        <span className="text-gray-400">Recording</span>
+        <span className="text-gray-400">{t('stream.participant.recording')}</span>
         <div className="flex items-center gap-2">
           <div
             className={cn('w-2 h-2 rounded-full', {
@@ -130,27 +135,27 @@ export const StreamingStatus: React.FC<StreamingStatusProps> = ({
               'bg-gray-500': recordingStatus === 'idle',
             })}
           />
-          <span className="text-white capitalize">{recordingStatus}</span>
+          <span className="text-white capitalize">{recordingText}</span>
         </div>
       </div>
 
       {bitrate && (
         <div className="flex items-center justify-between">
-          <span className="text-gray-400">Bitrate</span>
+          <span className="text-gray-400">{t('stream.participant.bitrate')}</span>
           <span className="text-white text-sm">{(bitrate / 1000000).toFixed(1)} Mbps</span>
         </div>
       )}
 
       {fps && (
         <div className="flex items-center justify-between">
-          <span className="text-gray-400">FPS</span>
+          <span className="text-gray-400">{t('stream.participant.fps')}</span>
           <span className="text-white text-sm">{fps} fps</span>
         </div>
       )}
 
       {resolution && (
         <div className="flex items-center justify-between">
-          <span className="text-gray-400">Resolution</span>
+          <span className="text-gray-400">{t('stream.participant.resolution')}</span>
           <span className="text-white text-sm">{resolution}</span>
         </div>
       )}

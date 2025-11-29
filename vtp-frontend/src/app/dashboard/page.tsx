@@ -2,6 +2,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/store';
 import { AnalyticsService } from '@/services/analytics.service';
@@ -24,6 +25,7 @@ import { useQuery } from '@tanstack/react-query';
 
 export default function DashboardPage() {
   const router = useRouter();
+  const t = useTranslations();
   const { user } = useAuth();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [engagement, setEngagement] = useState<EngagementMetrics[]>([]);
@@ -69,7 +71,7 @@ export default function DashboardPage() {
         setAlerts(plainAlerts);
         // Also fetch network quality
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load analytics');
+        setError(err instanceof Error ? err.message : t('dashboard.error.load'));
       } finally {
         setIsLoading(false);
       }
@@ -95,8 +97,8 @@ export default function DashboardPage() {
       <div className="container mx-auto px-4">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Analytics Dashboard</h1>
-          <p className="text-gray-400">Real-time insights and performance metrics</p>
+          <h1 className="text-4xl font-bold text-white mb-2">{t('dashboard.title')}</h1>
+          <p className="text-gray-400">{t('dashboard.subtitle')}</p>
         </div>
 
         {/* Filters */}
@@ -106,57 +108,57 @@ export default function DashboardPage() {
 
         {/* Key Metrics Grid */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-white mb-4">Key Metrics</h2>
+          <h2 className="text-2xl font-bold text-white mb-4">{t('dashboard.keyMetrics')}</h2>
           <StatGrid
             stats={[
               {
-                title: 'Total Students',
+                title: t('dashboard.stat.totalStudents'),
                 value: metrics?.totalStudents || 0,
                 icon: <Users className="w-6 h-6" />,
                 trend: {
                   value: 12,
                   isPositive: true,
-                  period: 'vs last month',
+                  period: t('dashboard.trend.vsLastMonth'),
                 },
               },
               {
-                title: 'Active Courses',
+                title: t('dashboard.stat.activeCourses'),
                 value: metrics?.totalCourses || 0,
                 icon: <BookOpen className="w-6 h-6" />,
                 trend: {
                   value: 5,
                   isPositive: true,
-                  period: 'added this month',
+                  period: t('dashboard.trend.addedThisMonth'),
                 },
               },
               {
-                title: 'Active Users',
+                title: t('dashboard.stat.activeUsers'),
                 value: metrics?.activeUsers || 0,
                 icon: <Activity className="w-6 h-6" />,
                 trend: {
                   value: 8,
                   isPositive: true,
-                  period: 'growth this week',
+                  period: t('dashboard.trend.growthThisWeek'),
                 },
               },
               {
-                title: 'Total Revenue',
+                title: t('dashboard.stat.totalRevenue'),
                 value: `$${(metrics?.totalRevenue || 0).toLocaleString()}`,
                 icon: <DollarSign className="w-6 h-6" />,
                 trend: {
                   value: 23,
                   isPositive: true,
-                  period: 'vs last month',
+                  period: t('dashboard.trend.vsLastMonth'),
                 },
               },
               {
-                title: 'Network Quality',
+                title: t('dashboard.stat.networkQuality'),
                 value: networkQualityLoading ? '…' : (networkQuality !== undefined ? `${networkQuality}%` : 'N/A'),
                 icon: <Activity className="w-6 h-6" />,
                 trend: {
                   value: 0,
                   isPositive: true,
-                  period: 'real-time',
+                  period: t('dashboard.trend.realTime'),
                 },
               },
             ]}
@@ -168,7 +170,7 @@ export default function DashboardPage() {
         {/* System Alerts */}
         {alerts.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-white mb-4">System Alerts</h2>
+            <h2 className="text-2xl font-bold text-white mb-4">{t('dashboard.systemAlerts')}</h2>
             <AlertList
               alerts={alerts.map(a => ({
                 id: a.id,
@@ -187,7 +189,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Engagement Trend */}
           <div>
-            <h2 className="text-2xl font-bold text-white mb-4">Engagement Trend</h2>
+            <h2 className="text-2xl font-bold text-white mb-4">{t('dashboard.engagementTrend')}</h2>
             <LineChart
               data={
                 engagement.length > 0
@@ -204,7 +206,7 @@ export default function DashboardPage() {
 
           {/* Watch Time Distribution */}
           <div>
-            <h2 className="text-2xl font-bold text-white mb-4">Watch Time by Course</h2>
+            <h2 className="text-2xl font-bold text-white mb-4">{t('dashboard.watchTimeByCourse')}</h2>
             <BarChart
               data={
                 courses.length > 0
@@ -224,7 +226,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           {/* Completion Rates */}
           <div>
-            <h2 className="text-2xl font-bold text-white mb-4">Completion Rates</h2>
+            <h2 className="text-2xl font-bold text-white mb-4">{t('dashboard.completionRates')}</h2>
             <PieChart
               data={
                 courses.length > 0
@@ -241,34 +243,34 @@ export default function DashboardPage() {
 
           {/* Top Performing Courses */}
           <div className="lg:col-span-2">
-            <h2 className="text-2xl font-bold text-white mb-4">Top Performing Courses</h2>
+            <h2 className="text-2xl font-bold text-white mb-4">{t('dashboard.topCourses')}</h2>
             <DataTable
               columns={[
                 {
                   key: 'courseName',
-                  label: 'Course',
+                  label: t('dashboard.table.course'),
                   sortable: true,
                 },
                 {
                   key: 'enrollmentCount',
-                  label: 'Enrollments',
+                  label: t('dashboard.table.enrollments'),
                   sortable: true,
                 },
                 {
                   key: 'completionRate',
-                  label: 'Completion %',
+                  label: t('dashboard.table.completion'),
                   render: (value: number) => `${value.toFixed(1)}%`,
                   sortable: true,
                 },
                 {
                   key: 'avgRating',
-                  label: 'Rating',
+                  label: t('dashboard.table.rating'),
                   render: (value: number) => `${value.toFixed(1)}/5`,
                   sortable: true,
                 },
                 {
                   key: 'activeStudents',
-                  label: 'Active',
+                  label: t('dashboard.table.active'),
                   sortable: true,
                 },
               ]}
@@ -280,25 +282,25 @@ export default function DashboardPage() {
 
         {/* Key Insights */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-white mb-4">Key Insights</h2>
+          <h2 className="text-2xl font-bold text-white mb-4">{t('dashboard.keyInsights')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <InsightCard
-              title="High Engagement"
-              description={`${metrics?.avgEngagementRate || 0}% of users are actively engaged this week`}
+              title={t('dashboard.insight.highEngagement.title')}
+              description={t('dashboard.insight.highEngagement.desc', { rate: metrics?.avgEngagementRate || 0 })}
               variant="success"
               icon={<TrendingUp className="w-5 h-5" />}
             />
 
             <InsightCard
-              title="Course Completion"
-              description={`Average completion rate is ${metrics?.avgCourseCompletion || 0}% across all courses`}
+              title={t('dashboard.insight.courseCompletion.title')}
+              description={t('dashboard.insight.courseCompletion.desc', { rate: metrics?.avgCourseCompletion || 0 })}
               variant="info"
               icon={<BookOpen className="w-5 h-5" />}
             />
 
             <InsightCard
-              title="Growth Trending"
-              description={`${metrics?.newSignupsToday || 0} new signups and ${metrics?.newEnrollmentsToday || 0} new enrollments today`}
+              title={t('dashboard.insight.growth.title')}
+              description={t('dashboard.insight.growth.desc', { signups: metrics?.newSignupsToday || 0, enrollments: metrics?.newEnrollmentsToday || 0 })}
               variant="success"
               icon={<Users className="w-5 h-5" />}
             />
@@ -307,25 +309,25 @@ export default function DashboardPage() {
 
         {/* Quick Stats */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-white mb-4">Quick Stats</h2>
+          <h2 className="text-2xl font-bold text-white mb-4">{t('dashboard.quickStats')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-gray-800 rounded-lg p-4">
-              <p className="text-gray-400 text-xs uppercase mb-1">Avg Engagement</p>
+              <p className="text-gray-400 text-xs uppercase mb-1">{t('dashboard.stat.avgEngagement')}</p>
               <p className="text-3xl font-bold text-white">{metrics?.avgEngagementRate || 0}%</p>
             </div>
 
             <div className="bg-gray-800 rounded-lg p-4">
-              <p className="text-gray-400 text-xs uppercase mb-1">Completion Rate</p>
+              <p className="text-gray-400 text-xs uppercase mb-1">{t('dashboard.stat.completionRate')}</p>
               <p className="text-3xl font-bold text-white">{metrics?.avgCourseCompletion || 0}%</p>
             </div>
 
             <div className="bg-gray-800 rounded-lg p-4">
-              <p className="text-gray-400 text-xs uppercase mb-1">New Signups Today</p>
+              <p className="text-gray-400 text-xs uppercase mb-1">{t('dashboard.stat.newSignupsToday')}</p>
               <p className="text-3xl font-bold text-white">{metrics?.newSignupsToday || 0}</p>
             </div>
 
             <div className="bg-gray-800 rounded-lg p-4">
-              <p className="text-gray-400 text-xs uppercase mb-1">New Enrollments</p>
+              <p className="text-gray-400 text-xs uppercase mb-1">{t('dashboard.stat.newEnrollments')}</p>
               <p className="text-3xl font-bold text-white">{metrics?.newEnrollmentsToday || 0}</p>
             </div>
           </div>
@@ -333,7 +335,7 @@ export default function DashboardPage() {
 
         {/* 5G Network Status & Metrics Section */}
         <div className="mb-8 border-t border-gray-700 pt-12">
-          <h2 className="text-2xl font-bold text-white mb-6">5G Network Status</h2>
+          <h2 className="text-2xl font-bold text-white mb-6">{t('dashboard.networkStatus5g')}</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <NetworkStatus refreshInterval={5000} />
             <MetricsDisplay refreshInterval={5000} />

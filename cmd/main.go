@@ -13,6 +13,7 @@ import (
 	"github.com/yourusername/vtp-platform/pkg/auth"
 	"github.com/yourusername/vtp-platform/pkg/course"
 	"github.com/yourusername/vtp-platform/pkg/db"
+	"github.com/yourusername/vtp-platform/pkg/instructor"
 	"github.com/yourusername/vtp-platform/pkg/recording"
 	"github.com/yourusername/vtp-platform/pkg/signalling"
 	"github.com/yourusername/vtp-platform/pkg/streaming"
@@ -204,6 +205,22 @@ func main() {
 		log.Println("\n[3d/5] Skipping course service (no database)")
 	}
 
+	// 3d2. Initialize Instructor Service (Phase 3+) - only if database available
+	var instructorHandlers *instructor.Handler
+	
+	if database != nil {
+		log.Println("\n[3d2/7] Initializing instructor management service...")
+		instructorRepo := instructor.NewRepository(database.Conn())
+		instructorService := instructor.NewService(instructorRepo)
+		instructorHandlers = instructor.NewHandler(instructorService)
+
+		log.Println("      ✓ Instructor repository initialized")
+		log.Println("      ✓ Instructor service initialized")
+		log.Println("      ✓ Instructor handlers initialized")
+	} else {
+		log.Println("\n[3d2/7] Skipping instructor service (no database)")
+	}
+
 	// 3e. Initialize Adaptive Bitrate (ABR) Engine (Phase 2B)
 	log.Println("\n[3e/5] Initializing adaptive bitrate (ABR) streaming engine...")
 	abrConfig := streaming.ABRConfig{
@@ -335,6 +352,51 @@ func main() {
 		log.Println("      ✓ POST /api/v1/courses/{id}/permissions")
 		log.Println("      ✓ GET /api/v1/courses/{id}/permissions/{user_id}")
 		log.Println("      ✓ GET /api/v1/courses/{id}/stats")
+	}
+
+	// Instructor management endpoints (Phase 3+) - only if database available
+	if instructorHandlers != nil {
+		http.HandleFunc("/api/v1/instructors", func(w http.ResponseWriter, r *http.Request) {
+			switch r.Method {
+			case http.MethodGet:
+				instructorHandlers.ListInstructors(w, r)
+			case http.MethodPost:
+				instructorHandlers.CreateInstructor(w, r)
+			default:
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		http.HandleFunc("/api/v1/instructors/", func(w http.ResponseWriter, r *http.Request) {
+			// Extract ID from path
+			if r.URL.Path == "/api/v1/instructors/" {
+				http.Error(w, "Instructor ID required", http.StatusBadRequest)
+				return
+			}
+
+			switch r.Method {
+			case http.MethodGet:
+				// Check for /availability endpoint
+				if r.URL.Path[len(r.URL.Path)-12:] == "/availability" {
+					instructorHandlers.GetAvailableSlots(w, r)
+				} else {
+					instructorHandlers.GetInstructor(w, r)
+				}
+			case http.MethodPut:
+				instructorHandlers.UpdateInstructor(w, r)
+			case http.MethodDelete:
+				instructorHandlers.DeleteInstructor(w, r)
+			default:
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		log.Println("      ✓ POST /api/v1/instructors")
+		log.Println("      ✓ GET /api/v1/instructors")
+		log.Println("      ✓ GET /api/v1/instructors/{id}")
+		log.Println("      ✓ PUT /api/v1/instructors/{id}")
+		log.Println("      ✓ DELETE /api/v1/instructors/{id}")
+		log.Println("      ✓ GET /api/v1/instructors/{id}/availability")
 	}
 
 	// Adaptive Bitrate (ABR) endpoints (Phase 2B)

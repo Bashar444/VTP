@@ -2,6 +2,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/store';
@@ -14,6 +15,7 @@ import { AlertCircle, ArrowLeft } from 'lucide-react';
 
 export default function CourseDetailPage() {
   const params = useParams();
+  const t = useTranslations();
   const router = useRouter();
   const { user } = useAuth();
   const courseId = params.id as string;
@@ -37,7 +39,7 @@ export default function CourseDetailPage() {
         setProgress(null);
       },
       onError: (err: any) => {
-        setError(err?.message || 'Failed to unenroll');
+        setError(err?.message || t('course.error.unenrollFailed'));
       },
     });
   };
@@ -61,7 +63,7 @@ export default function CourseDetailPage() {
       ]);
     },
     onError: (err: any) => {
-      setError(err?.message || 'Failed to enroll in course');
+      setError(err?.message || t('course.error.enrollFailed'));
     },
     onSettled: () => {
       setIsEnrolling(false);
@@ -93,7 +95,7 @@ export default function CourseDetailPage() {
           }
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load course');
+        setError(err instanceof Error ? err.message : t('course.error.loadFailed'));
       } finally {
         setIsLoading(false);
       }
@@ -145,12 +147,12 @@ export default function CourseDetailPage() {
             className="mb-6 flex items-center gap-2 text-blue-400 hover:text-blue-300"
           >
             <ArrowLeft className="w-5 h-5" />
-            Back
+            {t('course.back')}
           </button>
 
           <div className="bg-red-900/20 border border-red-700 rounded-lg p-6 flex items-center gap-4">
             <AlertCircle className="w-6 h-6 text-red-400 flex-shrink-0" />
-            <p className="text-red-400">{error || 'Course not found'}</p>
+            <p className="text-red-400">{error || t('course.error.notFound')}</p>
           </div>
         </div>
       </div>
@@ -166,7 +168,7 @@ export default function CourseDetailPage() {
           className="mb-6 flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
-          Back to Courses
+          {t('course.back')}
         </button>
 
         {/* Main Content Grid */}
@@ -202,14 +204,14 @@ export default function CourseDetailPage() {
                   <div className="bg-gray-800 rounded-lg p-6">
                     <div className="text-center space-y-4">
                       <p className="text-gray-400">
-                        {course.price ? `This course costs $${course.price}` : 'This course is free'}
+                        {course.price ? `${t('course.sidebar.costsPrefix')} $${course.price}` : t('course.sidebar.costsFree')}
                       </p>
                       <button
                         onClick={() => setShowEnrollForm(true)}
                         className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors disabled:opacity-50"
                         disabled={isEnrolling}
                       >
-                        {isEnrolling ? 'Processing…' : 'Enroll Now'}
+                        {isEnrolling ? t('course.enroll.processing') : t('enroll.form.enrollNow')}
                       </button>
                       {error && (
                         <p className="text-xs text-red-400">{error}</p>
@@ -220,19 +222,19 @@ export default function CourseDetailPage() {
               ) : (
                 <div className="bg-gray-800 rounded-lg p-6 space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold text-white">Your Progress</h3>
+                    <h3 className="text-lg font-bold text-white">{t('course.progress.title')}</h3>
                     <button
                       onClick={handleUnenroll}
                       disabled={unenrollMutation.isPending}
                       className="text-xs px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
                     >
-                      {unenrollMutation.isPending ? 'Leaving…' : 'Unenroll'}
+                      {unenrollMutation.isPending ? t('course.unenroll.leaving') : t('course.unenroll')}
                     </button>
                   </div>
                   <div className="space-y-4">
                     <div>
                       <div className="flex justify-between mb-2">
-                        <span className="text-gray-400">Overall</span>
+                        <span className="text-gray-400">{t('course.sidebar.progress.overall')}</span>
                         <span className="text-white font-semibold">{Math.round(progress?.completionPercentage || 0)}%</span>
                       </div>
                       <div className="w-full bg-gray-700 rounded-full h-2">
@@ -243,7 +245,7 @@ export default function CourseDetailPage() {
                       </div>
                     </div>
                     <p className="text-sm text-gray-400">
-                      Keep learning! {Math.round(100 - (progress?.completionPercentage || 0))}% of the course remaining
+                      {t('course.progress.remainingMessage', { remaining: Math.round(100 - (progress?.completionPercentage || 0)) })}
                     </p>
                     {error && (
                       <p className="text-xs text-red-400">{error}</p>
@@ -254,23 +256,23 @@ export default function CourseDetailPage() {
 
               {/* Course Info Card */}
               <div className="bg-gray-800 rounded-lg p-6">
-                <h3 className="text-lg font-bold text-white mb-4">Course Info</h3>
+                <h3 className="text-lg font-bold text-white mb-4">{t('course.info.title')}</h3>
                 <div className="space-y-3">
                   <div>
-                    <p className="text-gray-400 text-sm">Level</p>
-                    <p className="text-white capitalize">{course.level || 'Beginner'}</p>
+                    <p className="text-gray-400 text-sm">{t('course.info.level')}</p>
+                    <p className="text-white capitalize">{course.level || t('course.info.level')}</p>
                   </div>
                   <div>
-                    <p className="text-gray-400 text-sm">Students</p>
-                    <p className="text-white">{course.studentCount || 0} enrolled</p>
+                    <p className="text-gray-400 text-sm">{t('course.info.students')}</p>
+                    <p className="text-white">{course.studentCount || 0} {t('course.studentCount.enrolled')}</p>
                   </div>
                   <div>
-                    <p className="text-gray-400 text-sm">Duration</p>
-                    <p className="text-white">{course.duration || 0} hours</p>
+                    <p className="text-gray-400 text-sm">{t('course.info.duration')}</p>
+                    <p className="text-white">{course.duration || 0} {t('course.info.hours')}</p>
                   </div>
                   <div>
-                    <p className="text-gray-400 text-sm">Lectures</p>
-                    <p className="text-white">{lectures.length} lectures</p>
+                    <p className="text-gray-400 text-sm">{t('course.info.lectures')}</p>
+                    <p className="text-white">{lectures.length} {t('course.info.lectures')}</p>
                   </div>
                 </div>
               </div>
@@ -278,7 +280,7 @@ export default function CourseDetailPage() {
               {/* Instructor Card */}
               {course.instructorName && (
                 <div className="bg-gray-800 rounded-lg p-6">
-                  <h3 className="text-lg font-bold text-white mb-4">Instructor</h3>
+                  <h3 className="text-lg font-bold text-white mb-4">{t('course.info.instructor')}</h3>
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                       <span className="text-white font-bold">
@@ -287,7 +289,7 @@ export default function CourseDetailPage() {
                     </div>
                     <div>
                       <p className="text-white font-semibold">{course.instructorName}</p>
-                      <p className="text-gray-400 text-sm">Instructor</p>
+                      <p className="text-gray-400 text-sm">{t('course.info.instructor')}</p>
                     </div>
                   </div>
                 </div>

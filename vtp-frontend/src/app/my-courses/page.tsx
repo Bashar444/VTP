@@ -197,12 +197,12 @@ export default function MyCoursesPage() {
               <div className="text-center py-16">
                 <BookOpen className="w-16 h-16 text-gray-600 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-gray-300 mb-2">No courses yet</h3>
-                <p className="text-gray-400 mb-6">Start learning by enrolling in a course</p>
+                <p className="text-gray-400 mb-6">{t('myCourses.empty.start')}</p>
                 <button
                   onClick={() => router.push('/courses')}
                   className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors"
                 >
-                  Browse Courses
+                  {t('myCourses.empty.browse')}
                 </button>
               </div>
             )}
@@ -231,7 +231,7 @@ export default function MyCoursesPage() {
                       <div className="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors" />
                       <div className="absolute top-3 right-3 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
                         <CheckCircle className="w-4 h-4" />
-                        Completed
+                        {t('myCourses.completed.badge')}
                       </div>
                     </div>
 
@@ -243,7 +243,7 @@ export default function MyCoursesPage() {
 
                       {/* Instructor */}
                       <p className="text-sm text-gray-400 mb-4">
-                        by {course.instructor || 'Unknown Instructor'}
+                        {t('myCourses.instructor.by')} {course.instructor || t('myCourses.instructor.unknown')}
                       </p>
 
                       {/* Footer */}
@@ -251,7 +251,7 @@ export default function MyCoursesPage() {
                         onClick={() => handleViewCourse(course.id)}
                         className="w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-semibold rounded transition-colors"
                       >
-                        View Certificate
+                        {t('myCourses.view.certificate')}
                       </button>
                     </div>
                   </div>
@@ -260,8 +260,8 @@ export default function MyCoursesPage() {
             ) : (
               <div className="text-center py-16">
                 <CheckCircle className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-300 mb-2">No completed courses</h3>
-                <p className="text-gray-400 mb-6">Complete a course to see it here</p>
+                <h3 className="text-xl font-semibold text-gray-300 mb-2">{t('myCourses.completed.noneTitle')}</h3>
+                <p className="text-gray-400 mb-6">{t('myCourses.completed.noneDesc')}</p>
                 <button
                   onClick={() => router.push('/courses')}
                   className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors"
