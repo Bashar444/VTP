@@ -47,7 +47,7 @@ export function useStreamRoom(roomId: string) {
   const getParticipants = useCallback(async () => {
     if (!signaling) return [];
     try {
-      const data = await signaling.getParticipants(roomId);
+      const data = await signaling.getParticipants(roomId) as any[];
       setPeers(data.map((d: any) => ({ id: d.id, name: d.name, role: d.role, joinedAt: new Date(d.joinedAt || Date.now()) })));
       return data;
     } catch (e: any) {

@@ -64,7 +64,7 @@ export function NavBar() {
           </div>
           {user ? (
             <div className="flex items-center gap-2 text-sm">
-              <span className="text-gray-700">{user.name || user.email}</span>
+              <span className="text-gray-700">{user.firstName ? `${user.firstName} ${user.lastName}` : user.email}</span>
               <Link href="/logout" className="text-indigo-600 hover:underline">Logout</Link>
             </div>
           ) : (

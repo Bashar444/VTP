@@ -18,8 +18,8 @@ export function useCourses(filters?: CourseFilters) {
     queryFn: async () => {
       const result = await CourseService.getCourses(filters);
       // Ensure shape normalization in case backend differs
-      if (Array.isArray(result as any)) {
-        return { courses: result as unknown as Course[], total: (result as Course[]).length };
+      if (Array.isArray(result)) {
+        return { courses: result as Course[], total: result.length };
       }
       return result;
     },
