@@ -7,10 +7,6 @@ const nextConfig = {
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
   output: 'standalone',
-  experimental: {
-    // Disable ISR and force all pages to be dynamic
-    isrMemoryCacheSize: 0,
-  },
   typescript: {
     // Ignore TS errors during production build to avoid Cypress/test types interfering
     ignoreBuildErrors: true,
