@@ -79,7 +79,7 @@ export interface CourseStats {
   averageCompletion: number;
 }
 
-class CourseService {
+class CourseServiceImpl {
   /**
    * Get all courses with optional filters
    */
@@ -363,5 +363,5 @@ class CourseService {
   }
 }
 // Export both named and default for flexibility
-export const CourseService = new CourseService();
+export const CourseService = new CourseServiceImpl();
 export default CourseService;
