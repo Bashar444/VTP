@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/stores/auth';
+import { useAuth } from '@/store/auth';
 import { CourseService } from '@/services/course.service';
 import { CourseCard } from '@/components/courses/CourseCard';
 import type { Course } from '@/services/course.service';
