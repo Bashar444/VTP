@@ -64,23 +64,33 @@ func main() {
 	log.Println("\n[1/5] Initializing database connection...")
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		dbURL = "postgres://postgres:postgres@localhost:5432/vtp_db?sslmode=disable"
-		log.Println("      Using default database URL")
+		// Try common Railway and local defaults
+		if railwayDBURL := os.Getenv("RAILWAY_DATABASE_URL"); railwayDBURL != "" {
+			dbURL = railwayDBURL
+			log.Println("      Using Railway DATABASE_URL")
+		} else {
+			dbURL = "postgres://postgres:postgres@localhost:5432/vtp_db?sslmode=disable"
+			log.Println("      Using default local database URL")
+		}
 	}
 
 	database, err := db.NewDatabase(dbURL)
 	if err != nil {
-		log.Fatalf("❌ Failed to initialize database: %v", err)
-	}
-	defer database.Close()
-	log.Println("      ✓ Database connected")
+		log.Printf("⚠ Database connection failed: %v", err)
+		log.Println("      ⚠ Starting without database (recordings/streaming disabled)")
+		database = nil
+	} else {
+		defer database.Close()
+		log.Println("      ✓ Database connected")
 
-	// 2. Run Database Migrations
-	log.Println("\n[2/5] Running database migrations...")
-	if err := database.RunMigrations(); err != nil {
-		log.Fatalf("❌ Failed to run migrations: %v", err)
+		// 2. Run Database Migrations
+		log.Println("\n[2/5] Running database migrations...")
+		if err := database.RunMigrations(); err != nil {
+			log.Printf("⚠ Migration failed: %v", err)
+		} else {
+			log.Println("      ✓ Migrations completed")
+		}
 	}
-	log.Println("      ✓ Migrations completed")
 
 	// 3. Initialize Auth Services
 	log.Println("\n[3/5] Initializing authentication services...")
@@ -108,13 +118,25 @@ func main() {
 	// Initialize auth services
 	tokenService := auth.NewTokenService(jwtSecret, jwtAccessHours, jwtRefreshHours)
 	passwordService := auth.NewPasswordService(12)
-	userStore := auth.NewUserStore(database.Conn(), passwordService)
-	authHandler := auth.NewAuthHandler(userStore, tokenService, passwordService)
-	authMiddleware := auth.NewAuthMiddleware(tokenService)
+	var userStore *auth.UserStore
+	var authHandler *auth.AuthHandler
+	var authMiddleware *auth.AuthMiddleware
+	
+	if database != nil {
+		userStore = auth.NewUserStore(database.Conn(), passwordService)
+		authHandler = auth.NewAuthHandler(userStore, tokenService, passwordService)
+		authMiddleware = auth.NewAuthMiddleware(tokenService)
+	} else {
+		// Create dummy handlers when no database
+		authHandler = auth.NewAuthHandler(nil, tokenService, passwordService)
+		authMiddleware = auth.NewAuthMiddleware(tokenService)
+	}
 
 	log.Printf("      ✓ Token service (access: %dh, refresh: %dh)", jwtAccessHours, jwtRefreshHours)
 	log.Println("      ✓ Password service (bcrypt cost: 12)")
-	log.Println("      ✓ User store")
+	if database != nil {
+		log.Println("      ✓ User store")
+	}
 	log.Println("      ✓ Auth handlers")
 	log.Println("      ✓ Auth middleware")
 
@@ -133,37 +155,52 @@ func main() {
 	storageDir := getStorageDir()
 	ffmpegPath := getFFmpegPath()
 
-	// 3c. Initialize Recording Service (Phase 2a)
-	log.Println("[3c/5] Initializing recording service...")
-	recordingService := recording.NewRecordingService(database.Conn(), log.New(os.Stderr, "[Recording] ", log.LstdFlags))
-	recordingHandlers := recording.NewRecordingHandlers(recordingService, log.New(os.Stderr, "[RecordingAPI] ", log.LstdFlags))
+	// 3c. Initialize Recording Service (Phase 2a) - only if database available
+	var recordingHandlers *recording.RecordingHandlers
+	var storageHandlers *recording.StorageHandlers
+	var playbackHandlers *recording.PlaybackHandlers
+	
+	if database != nil {
+		log.Println("\n[3c/5] Initializing recording service...")
+		recordingService := recording.NewRecordingService(database.Conn(), log.New(os.Stderr, "[Recording] ", log.LstdFlags))
+		recordingHandlers = recording.NewRecordingHandlers(recordingService, log.New(os.Stderr, "[RecordingAPI] ", log.LstdFlags))
 
-	// Initialize storage backend (Phase 2a Day 3)
-	storageBackend, err := recording.NewLocalStorageBackend(storageDir, log.New(os.Stderr, "[Storage] ", log.LstdFlags))
-	if err != nil {
-		log.Fatalf("❌ Failed to initialize storage backend: %v", err)
+		// Initialize storage backend (Phase 2a Day 3)
+		storageBackend, err := recording.NewLocalStorageBackend(storageDir, log.New(os.Stderr, "[Storage] ", log.LstdFlags))
+		if err != nil {
+			log.Printf("⚠ Failed to initialize storage backend: %v", err)
+		} else {
+			storageManager := recording.NewStorageManager(storageBackend, database.Conn(), log.New(os.Stderr, "[StorageManager] ", log.LstdFlags))
+			storageHandlers = recording.NewStorageHandlers(storageManager, recordingService, log.New(os.Stderr, "[StorageAPI] ", log.LstdFlags))
+
+			// Initialize streaming manager (Phase 2a Day 4)
+			streamingManager := recording.NewStreamingManager(storageManager, database.Conn(), log.New(os.Stderr, "[Streaming] ", log.LstdFlags), storageDir)
+			playbackHandlers = recording.NewPlaybackHandlers(streamingManager, recordingService, log.New(os.Stderr, "[PlaybackAPI] ", log.LstdFlags))
+
+			log.Println("      ✓ Recording service initialized")
+			log.Println("      ✓ Recording handlers initialized")
+			log.Println("      ✓ Storage backend initialized (local filesystem)")
+			log.Println("      ✓ Storage handlers initialized")
+			log.Println("      ✓ Streaming manager initialized (HLS/DASH)")
+			log.Println("      ✓ Playback handlers initialized")
+		}
+	} else {
+		log.Println("\n[3c/5] Skipping recording service (no database)")
 	}
-	storageManager := recording.NewStorageManager(storageBackend, database.Conn(), log.New(os.Stderr, "[StorageManager] ", log.LstdFlags))
-	storageHandlers := recording.NewStorageHandlers(storageManager, recordingService, log.New(os.Stderr, "[StorageAPI] ", log.LstdFlags))
 
-	// Initialize streaming manager (Phase 2a Day 4)
-	streamingManager := recording.NewStreamingManager(storageManager, database.Conn(), log.New(os.Stderr, "[Streaming] ", log.LstdFlags), storageDir)
-	playbackHandlers := recording.NewPlaybackHandlers(streamingManager, recordingService, log.New(os.Stderr, "[PlaybackAPI] ", log.LstdFlags))
+	// 3d. Initialize Course Service (Phase 3) - only if database available
+	var courseHandlers *course.CourseHandlers
+	
+	if database != nil {
+		log.Println("\n[3d/5] Initializing course management service...")
+		courseService := course.NewCourseService(database.Conn(), log.New(os.Stderr, "[CourseService] ", log.LstdFlags))
+		courseHandlers = course.NewCourseHandlers(courseService, log.New(os.Stderr, "[CourseAPI] ", log.LstdFlags))
 
-	log.Println("      ✓ Recording service initialized")
-	log.Println("      ✓ Recording handlers initialized")
-	log.Println("      ✓ Storage backend initialized (local filesystem)")
-	log.Println("      ✓ Storage handlers initialized")
-	log.Println("      ✓ Streaming manager initialized (HLS/DASH)")
-	log.Println("      ✓ Playback handlers initialized")
-
-	// 3d. Initialize Course Service (Phase 3)
-	log.Println("\n[3d/5] Initializing course management service...")
-	courseService := course.NewCourseService(database.Conn(), log.New(os.Stderr, "[CourseService] ", log.LstdFlags))
-	courseHandlers := course.NewCourseHandlers(courseService, log.New(os.Stderr, "[CourseAPI] ", log.LstdFlags))
-
-	log.Println("      ✓ Course service initialized")
-	log.Println("      ✓ Course handlers initialized")
+		log.Println("      ✓ Course service initialized")
+		log.Println("      ✓ Course handlers initialized")
+	} else {
+		log.Println("\n[3d/5] Skipping course service (no database)")
+	}
 
 	// 3e. Initialize Adaptive Bitrate (ABR) Engine (Phase 2B)
 	log.Println("\n[3e/5] Initializing adaptive bitrate (ABR) streaming engine...")
@@ -251,44 +288,52 @@ func main() {
 	http.HandleFunc("/api/v1/signalling/room/delete", sigAPIHandler.DeleteRoomHandler)
 	log.Println("      ✓ DELETE /api/v1/signalling/room/delete")
 
-	// Recording endpoints (Phase 2a)
-	recordingHandlers.RegisterRoutes(http.DefaultServeMux)
-	log.Println("      ✓ POST /api/v1/recordings/start")
-	log.Println("      ✓ POST /api/v1/recordings/{id}/stop")
-	log.Println("      ✓ GET /api/v1/recordings")
-	log.Println("      ✓ GET /api/v1/recordings/{id}")
-	log.Println("      ✓ DELETE /api/v1/recordings/{id}")
+	// Recording endpoints (Phase 2a) - only if database available
+	if recordingHandlers != nil {
+		recordingHandlers.RegisterRoutes(http.DefaultServeMux)
+		log.Println("      ✓ POST /api/v1/recordings/start")
+		log.Println("      ✓ POST /api/v1/recordings/{id}/stop")
+		log.Println("      ✓ GET /api/v1/recordings")
+		log.Println("      ✓ GET /api/v1/recordings/{id}")
+		log.Println("      ✓ DELETE /api/v1/recordings/{id}")
+	}
 
-	// Storage/Download endpoints (Phase 2a Day 3)
-	storageHandlers.RegisterStorageRoutes(http.DefaultServeMux)
-	log.Println("      ✓ GET /api/v1/recordings/{id}/download")
-	log.Println("      ✓ GET /api/v1/recordings/{id}/download-url")
-	log.Println("      ✓ GET /api/v1/recordings/{id}/info")
+	// Storage/Download endpoints (Phase 2a Day 3) - only if database available
+	if storageHandlers != nil {
+		storageHandlers.RegisterStorageRoutes(http.DefaultServeMux)
+		log.Println("      ✓ GET /api/v1/recordings/{id}/download")
+		log.Println("      ✓ GET /api/v1/recordings/{id}/download-url")
+		log.Println("      ✓ GET /api/v1/recordings/{id}/info")
+	}
 
-	// Streaming/Playback endpoints (Phase 2a Day 4)
-	playbackHandlers.RegisterPlaybackRoutes(http.DefaultServeMux)
-	log.Println("      ✓ GET /api/v1/recordings/{id}/stream/playlist.m3u8")
-	log.Println("      ✓ GET /api/v1/recordings/{id}/stream/*.ts")
-	log.Println("      ✓ POST /api/v1/recordings/{id}/transcode")
-	log.Println("      ✓ POST /api/v1/recordings/{id}/progress")
-	log.Println("      ✓ GET /api/v1/recordings/{id}/thumbnail")
-	log.Println("      ✓ GET /api/v1/recordings/{id}/analytics")
+	// Streaming/Playback endpoints (Phase 2a Day 4) - only if database available
+	if playbackHandlers != nil {
+		playbackHandlers.RegisterPlaybackRoutes(http.DefaultServeMux)
+		log.Println("      ✓ GET /api/v1/recordings/{id}/stream/playlist.m3u8")
+		log.Println("      ✓ GET /api/v1/recordings/{id}/stream/*.ts")
+		log.Println("      ✓ POST /api/v1/recordings/{id}/transcode")
+		log.Println("      ✓ POST /api/v1/recordings/{id}/progress")
+		log.Println("      ✓ GET /api/v1/recordings/{id}/thumbnail")
+		log.Println("      ✓ GET /api/v1/recordings/{id}/analytics")
+	}
 
-	// Course management endpoints (Phase 3)
-	courseHandlers.RegisterCourseRoutes(http.DefaultServeMux)
-	log.Println("      ✓ POST /api/v1/courses")
-	log.Println("      ✓ GET /api/v1/courses")
-	log.Println("      ✓ GET /api/v1/courses/{id}")
-	log.Println("      ✓ PUT /api/v1/courses/{id}")
-	log.Println("      ✓ DELETE /api/v1/courses/{id}")
-	log.Println("      ✓ POST /api/v1/courses/{id}/enroll")
-	log.Println("      ✓ GET /api/v1/courses/{id}/enrollments")
-	log.Println("      ✓ DELETE /api/v1/courses/{id}/enroll/{student_id}")
-	log.Println("      ✓ POST /api/v1/courses/{id}/recordings")
-	log.Println("      ✓ POST /api/v1/courses/{id}/recordings/{recording_id}/publish")
-	log.Println("      ✓ POST /api/v1/courses/{id}/permissions")
-	log.Println("      ✓ GET /api/v1/courses/{id}/permissions/{user_id}")
-	log.Println("      ✓ GET /api/v1/courses/{id}/stats")
+	// Course management endpoints (Phase 3) - only if database available
+	if courseHandlers != nil {
+		courseHandlers.RegisterCourseRoutes(http.DefaultServeMux)
+		log.Println("      ✓ POST /api/v1/courses")
+		log.Println("      ✓ GET /api/v1/courses")
+		log.Println("      ✓ GET /api/v1/courses/{id}")
+		log.Println("      ✓ PUT /api/v1/courses/{id}")
+		log.Println("      ✓ DELETE /api/v1/courses/{id}")
+		log.Println("      ✓ POST /api/v1/courses/{id}/enroll")
+		log.Println("      ✓ GET /api/v1/courses/{id}/enrollments")
+		log.Println("      ✓ DELETE /api/v1/courses/{id}/enroll/{student_id}")
+		log.Println("      ✓ POST /api/v1/courses/{id}/recordings")
+		log.Println("      ✓ POST /api/v1/courses/{id}/recordings/{recording_id}/publish")
+		log.Println("      ✓ POST /api/v1/courses/{id}/permissions")
+		log.Println("      ✓ GET /api/v1/courses/{id}/permissions/{user_id}")
+		log.Println("      ✓ GET /api/v1/courses/{id}/stats")
+	}
 
 	// Adaptive Bitrate (ABR) endpoints (Phase 2B)
 	abrHandlers.RegisterABRRoutes(http.DefaultServeMux)
