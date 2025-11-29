@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
-import { API_BASE_URL, API_TIMEOUT, RETRY_CONFIG } from './api.config';
+import { API_BASE_URL, API_TIMEOUT, RETRY_CONFIG } from '@/utils/api.config';
 
 // Create axios instance with default config
 const createAxiosInstance = (): AxiosInstance => {

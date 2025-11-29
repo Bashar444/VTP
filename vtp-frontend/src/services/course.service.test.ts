@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CourseService } from '@/services/course.service';
-import { api } from '@/lib/api';
+import { api } from '@/services/api.client';
 
-vi.mock('@/lib/api');
+vi.mock('@/services/api.client');
 
 const mockCourse = {
   id: 'course-1',
