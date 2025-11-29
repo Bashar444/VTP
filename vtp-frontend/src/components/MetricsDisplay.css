@@ -1,0 +1,350 @@
+/**
+ * MetricsDisplay Component Styles
+ */
+
+.metrics-display {
+  padding: 20px;
+  background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+.metrics-display.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  font-size: 16px;
+  color: #aaa;
+}
+
+.error-message {
+  background-color: rgba(255, 0, 0, 0.1);
+  border-left: 4px solid #ff3333;
+  color: #ff6666;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.metrics-section {
+  margin-bottom: 30px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.update-info {
+  font-size: 12px;
+  color: #888;
+  font-weight: 500;
+}
+
+.no-data {
+  text-align: center;
+  padding: 30px;
+  color: #666;
+  font-size: 14px;
+}
+
+/* Session Metrics Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.metric-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 14px;
+  transition: all 0.3s ease;
+}
+
+.metric-card.metric-good {
+  border-color: rgba(102, 255, 102, 0.3);
+  background: rgba(102, 255, 102, 0.05);
+}
+
+.metric-card.metric-warning {
+  border-color: rgba(255, 170, 0, 0.3);
+  background: rgba(255, 170, 0, 0.05);
+}
+
+.metric-card.metric-poor {
+  border-color: rgba(255, 102, 102, 0.3);
+  background: rgba(255, 102, 102, 0.05);
+}
+
+.metric-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.metric-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #aaa;
+  font-weight: 600;
+}
+
+.metric-icon,
+.metric-trend {
+  font-size: 14px;
+}
+
+.metric-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  font-family: 'Monaco', 'Courier New', monospace;
+  margin-bottom: 4px;
+}
+
+.metric-subtext {
+  font-size: 11px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.metric-bar {
+  height: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.metric-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #66ff66, #ffaa00);
+  transition: width 0.3s ease;
+}
+
+/* Global Metrics Grid */
+.global-metrics {
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 30px;
+}
+
+.global-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.global-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.global-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.global-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #888;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.global-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #66ff66;
+  font-family: 'Monaco', 'Courier New', monospace;
+  margin-bottom: 4px;
+}
+
+.global-subtext {
+  font-size: 11px;
+  color: #666;
+}
+
+/* Charts Section */
+.charts-section {
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 30px;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.chart-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.chart-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #aaa;
+  margin-bottom: 8px;
+}
+
+.chart-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trend-chart {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  padding: 4px;
+}
+
+.chart-area {
+  height: 80px;
+  position: relative;
+}
+
+.sparkline {
+  width: 100%;
+  height: 100%;
+}
+
+.trend-stat {
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+}
+
+.trend-stat strong {
+  color: #fff;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+}
+
+/* Footer */
+.metrics-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 20px;
+  font-size: 12px;
+  color: #888;
+}
+
+.refresh-metrics-btn {
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.refresh-metrics-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.refresh-metrics-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .metrics-display {
+    padding: 16px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .section-header h3 {
+    font-size: 18px;
+  }
+
+  .update-info {
+    font-size: 11px;
+  }
+
+  .global-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metrics-footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .metrics-display {
+    padding: 12px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .global-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-header h3 {
+    font-size: 16px;
+  }
+
+  .metric-value {
+    font-size: 16px;
+  }
+
+  .global-value {
+    font-size: 16px;
+  }
+}

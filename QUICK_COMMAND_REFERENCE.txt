@@ -1,0 +1,161 @@
+# VTP Windows Deployment - Quick Command Reference Card
+
+**Print this out or keep in a terminal window**
+
+---
+
+## 🚨 BEFORE YOU START (One-Time Setup)
+
+### 1. Install FFmpeg (2-3 minutes)
+```powershell
+# Run as Administrator
+choco install ffmpeg -y
+ffmpeg -version
+```
+
+### 2. Start Infrastructure (1 minute)
+```powershell
+cd "C:\Users\basha\Desktop\VTP"
+docker-compose up -d
+docker-compose ps
+```
+
+---
+
+## 🚀 DEPLOYMENT (3 Terminals)
+
+### Terminal 1: Mediasoup SFU
+```
+Location: C:\Users\basha\Desktop\VTP\mediasoup-sfu
+
+cd "C:\Users\basha\Desktop\VTP\mediasoup-sfu"
+npm install
+npm start
+
+Wait for: "Server ready at http://127.0.0.1:3000"
+```
+
+### Terminal 2: Go Backend
+```
+Location: C:\Users\basha\Desktop\VTP
+
+cd "C:\Users\basha\Desktop\VTP"
+go build -o app.exe ./cmd
+.\app.exe
+
+Wait for: "Server running on http://localhost:8080"
+```
+
+### Terminal 3: Health Check
+```
+After both servers start (wait ~5 seconds):
+
+curl http://localhost:3000/health
+curl http://localhost:8080/health
+
+Expected: Both return 200 OK
+```
+
+---
+
+## ✅ Configuration Summary
+
+| Setting | Value |
+|---------|-------|
+| Recordings Dir | `C:\Users\basha\Desktop\VTP\recordings` |
+| FFmpeg Path | `ffmpeg` (PATH lookup) |
+| API Port | `8080` |
+| Mediasoup Port | `3000` |
+| Database | `postgres://postgres:postgres@localhost:5432/vtp_db` |
+| Redis | `redis://localhost:6379` |
+| MinIO | `http://localhost:9000` |
+
+---
+
+## 🔥 Common Issues & Quick Fixes
+
+| Problem | Command |
+|---------|---------|
+| Port 3000 in use | `Get-NetTCPConnection -LocalPort 3000` |
+| Port 8080 in use | `Get-NetTCPConnection -LocalPort 8080` |
+| Kill process (replace PID) | `Stop-Process -Id <PID> -Force` |
+| Go build fails | `go clean -cache; go mod tidy; go build -o app.exe ./cmd` |
+| npm fails | `npm cache clean --force; npm install` |
+| Database not responding | `docker-compose up -d vtp-db` |
+| Docker not running | `docker-compose ps` |
+
+---
+
+## 📋 Verification Steps (After Deployment)
+
+1. **Mediasoup responding:**
+   ```powershell
+   Invoke-WebRequest http://localhost:3000/health -UseBasicParsing
+   ```
+
+2. **Go Backend responding:**
+   ```powershell
+   Invoke-WebRequest http://localhost:8080/health -UseBasicParsing
+   ```
+
+3. **Recordings directory exists:**
+   ```powershell
+   Test-Path "C:\Users\basha\Desktop\VTP\recordings"
+   ```
+
+4. **FFmpeg available:**
+   ```powershell
+   ffmpeg -version
+   ```
+
+5. **Check all services:**
+   ```powershell
+   docker-compose ps
+   ```
+
+---
+
+## 📂 Key Paths
+
+```
+Project Root:     C:\Users\basha\Desktop\VTP\
+.env file:        C:\Users\basha\Desktop\VTP\.env
+Mediasoup:        C:\Users\basha\Desktop\VTP\mediasoup-sfu\
+Go Backend:       C:\Users\basha\Desktop\VTP\cmd\main.go
+Recordings:       C:\Users\basha\Desktop\VTP\recordings\
+```
+
+---
+
+## 🎯 Success Indicators
+
+✅ FFmpeg installed  
+✅ Docker containers running  
+✅ Terminal 1: Mediasoup server started  
+✅ Terminal 2: Go backend started (all 5 steps)  
+✅ Terminal 3: Both health checks return 200  
+
+---
+
+## 📚 Documentation
+
+- **Complete Guide:** `WINDOWS_DEPLOYMENT_GUIDE.md`
+- **Quick Start:** `WINDOWS_QUICK_START.md`
+- **Environment Status:** `WINDOWS_ENV_STATUS_REPORT.md`
+- **Deployment Summary:** `DEPLOYMENT_SUMMARY.md`
+
+---
+
+## ⏱️ Timeline
+
+- Install FFmpeg: 2-3 min
+- Start Docker: 1 min
+- Start Mediasoup: 10 sec
+- Start Go Backend: 5 sec
+- Verify: 2 min
+- **Total: ~10 minutes**
+
+---
+
+**Need help? Check the full documentation in the guides above!**
+

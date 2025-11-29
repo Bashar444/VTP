@@ -1,0 +1,148 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: vtp-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: vtp_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - vtp-network
+
+  # Redis Cache & Session Store
+  redis:
+    image: redis:7-alpine
+    container_name: vtp-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - vtp-network
+
+  # Mediasoup SFU (Node.js based) - Phase 1c
+  mediasoup-sfu:
+    build:
+      context: ./mediasoup-sfu
+      dockerfile: Dockerfile
+    container_name: vtp-mediasoup-sfu
+    ports:
+      - "3000:3000"
+      - "40000-49999:40000-49999/udp"
+      - "40000-49999:40000-49999/tcp"
+    environment:
+      NODE_ENV: production
+      MEDIASOUP_PORT: 3000
+      MEDIASOUP_LISTEN_IP: "0.0.0.0"
+      MEDIASOUP_ANNOUNCED_IP: "${MEDIASOUP_ANNOUNCED_IP:-127.0.0.1}"
+      MEDIASOUP_RTC_MIN_PORT: 40000
+      MEDIASOUP_RTC_MAX_PORT: 49999
+      LOG_LEVEL: info
+    volumes:
+      - ./mediasoup-sfu/logs:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - vtp-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # Go API & Signalling Server
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vtp-api
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@postgres:5432/vtp_db?sslmode=disable"
+      REDIS_URL: "redis://redis:6379"
+      PORT: "8080"
+      MEDIASOUP_URL: "http://mediasoup-sfu:3000"
+      NODE_ENV: production
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mediasoup-sfu:
+        condition: service_healthy
+    networks:
+      - vtp-network
+    volumes:
+      - ./recordings:/app/recordings
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # MinIO S3-compatible storage (for local development)
+  minio:
+    image: minio/minio:latest
+    container_name: vtp-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/minio_data
+    command: server /minio_data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - vtp-network
+
+  # Optional: pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: vtp-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - vtp-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+
+networks:
+  vtp-network:
+    driver: bridge
