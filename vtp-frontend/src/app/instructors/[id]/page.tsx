@@ -8,6 +8,8 @@ import { InstructorService, SubjectService } from '@/services/domain.service';
 import type { Instructor, Subject } from '@/types/domains';
 import { Star, Award, BookOpen, Clock, CheckCircle, Calendar } from 'lucide-react';
 import { BookingModal } from '@/components/meetings/BookingModal';
+import { MeetingService } from '@/services/domain.service';
+import type { Meeting } from '@/types/domains';
 
 export default function InstructorProfilePage() {
   const params = useParams();
@@ -21,6 +23,7 @@ export default function InstructorProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [showBooking, setShowBooking] = useState(false);
   const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
+  const [upcomingMeetings, setUpcomingMeetings] = useState<Meeting[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,6 +39,13 @@ export default function InstructorProfilePage() {
           const instructorSubjects = allSubj.filter((s: Subject) => instructorData.specialization.includes(s.id));
           setSubjects(instructorSubjects);
         }
+
+        // Fetch upcoming meetings (scheduled only, future times)
+        const meetingsResp = await MeetingService.getMeetings({ instructor_id: instructorId, status: 'scheduled' });
+        const future = meetingsResp.filter(m => new Date(m.scheduled_at) > new Date())
+          .sort((a,b)=> new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime())
+          .slice(0,5);
+        setUpcomingMeetings(future);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load instructor');
       } finally {
@@ -219,6 +229,28 @@ export default function InstructorProfilePage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Upcoming Meetings */}
+            <div className="bg-gray-800 rounded-lg p-6">
+              <h2 className="text-xl font-bold text-white mb-4">الجلسات القادمة</h2>
+              {upcomingMeetings.length === 0 ? (
+                <p className="text-gray-400 text-sm">لا توجد جلسات مجدولة</p>
+              ) : (
+                <ul className="space-y-3">
+                  {upcomingMeetings.map(m => {
+                    const subj = subjects.find(s => s.id === m.subject_id) || allSubjects.find(s=>s.id===m.subject_id);
+                    return (
+                      <li key={m.id} className="flex items-center justify-between text-sm">
+                        <div className="text-gray-300 flex flex-col">
+                          <span className="font-semibold text-white line-clamp-1">{subj?.name_ar || 'مادة'}</span>
+                          <span className="text-gray-400">{formatDateTime(m.scheduled_at)}</span>
+                        </div>
+                        <span className="px-2 py-1 bg-blue-900/30 text-blue-300 rounded text-xs">{m.duration} دقيقة</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
             {/* Availability */}
             <div className="bg-gray-800 rounded-lg p-6">
               <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
@@ -302,4 +334,10 @@ function translateDay(day: string): string {
     'Saturday': 'السبت',
   };
   return days[day] || day;
+}
+
+function formatDateTime(iso: string) {
+  try {
+    return new Date(iso).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' });
+  } catch { return iso; }
 }

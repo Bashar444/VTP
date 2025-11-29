@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { MaterialService } from '@/services/domain.service';
 import type { StudyMaterial } from '@/types/domains';
 import { useAuth } from '@/store';
-import { FileText, UploadCloud, Loader2, Download, Trash2, Filter } from 'lucide-react';
+import { FileText, UploadCloud, Download, Trash2, Filter } from 'lucide-react';
 
 const typeLabels: Record<string,string> = {
   pdf: 'ملف PDF',
@@ -146,7 +146,7 @@ export default function MaterialsPage() {
                     <Download className="w-4 h-4" /> {t('materials.download')}
                   </a>
                   {user?.id === m.instructor_id && (
-                    <button className="flex items-center gap-1 text-red-400 hover:text-red-300 text-sm" title="غير مدعوم الآن">
+                    <button onClick={()=>handleDelete(m.id)} className="flex items-center gap-1 text-red-400 hover:text-red-300 text-sm">
                       <Trash2 className="w-4 h-4" /> {t('materials.delete')}
                     </button>
                   )}
@@ -158,4 +158,15 @@ export default function MaterialsPage() {
       </div>
     </div>
   );
+}
+
+async function handleDelete(id: string) {
+  if (!confirm('تأكيد الحذف؟')) return;
+  try {
+    await MaterialService.deleteMaterial(id);
+    // naive reload after deletion
+    window.location.reload();
+  } catch (e:any) {
+    alert(e.message || 'فشل الحذف');
+  }
 }

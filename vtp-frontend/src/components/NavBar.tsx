@@ -50,6 +50,7 @@ export function NavBar() {
           <nav className="hidden md:flex items-center gap-4 text-sm font-medium text-gray-700">
             <Link href="/courses" className="hover:text-indigo-600">{t('nav.courses')}</Link>
                         <Link href="/instructors" className="hover:text-indigo-600">{t('nav.instructors')}</Link>
+            <Link href="/materials" className="hover:text-indigo-600">{t('nav.materials')}</Link>
             <Link href="/my-courses" className="hover:text-indigo-600">{t('nav.myCourses')}</Link>
             <Link href="/dashboard" className="hover:text-indigo-600">{t('nav.dashboard')}</Link>
             <Link href="/stream/demo" className="hover:text-indigo-600">{t('nav.stream')}</Link>
