@@ -18,6 +18,7 @@ import NetworkStatus from '@/components/NetworkStatus';
 import QualitySelector from '@/components/QualitySelector';
 import EdgeNodeViewer from '@/components/EdgeNodeViewer';
 import MetricsDisplay from '@/components/MetricsDisplay';
+import { g5Service } from '@/services/g5Service';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -28,6 +29,8 @@ export default function DashboardPage() {
   const [alerts, setAlerts] = useState<SystemAlert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [globalQuality, setGlobalQuality] = useState<number | null>(null);
+  const [networkQualityLoading, setNetworkQualityLoading] = useState(false);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -36,7 +39,7 @@ export default function DashboardPage() {
     }
   }, [user, router]);
 
-  // Fetch analytics data
+  // Fetch analytics + network quality data
   useEffect(() => {
     const fetchData = async () => {
       if (!user) return;
@@ -54,6 +57,17 @@ export default function DashboardPage() {
         setEngagement(engagementData);
         setCourses(courseData);
         setAlerts(systemAlerts);
+        // Also fetch network quality
+        try {
+          setNetworkQualityLoading(true);
+          const quality = await g5Service.getNetworkQuality();
+          setGlobalQuality(quality);
+        } catch (e) {
+          // Non-blocking
+          console.warn('Failed to fetch network quality');
+        } finally {
+          setNetworkQualityLoading(false);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load analytics');
       } finally {
@@ -135,9 +149,19 @@ export default function DashboardPage() {
                   period: 'vs last month',
                 },
               },
+              {
+                title: 'Network Quality',
+                value: networkQualityLoading ? '…' : (globalQuality !== null ? `${globalQuality}%` : 'N/A'),
+                icon: <Activity className="w-6 h-6" />,
+                trend: {
+                  value: 0,
+                  isPositive: true,
+                  period: 'real-time',
+                },
+              },
             ]}
             isLoading={isLoading}
-            columns={4}
+            columns={5}
           />
         </div>
 

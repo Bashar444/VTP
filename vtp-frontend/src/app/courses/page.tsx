@@ -15,6 +15,7 @@ export default function CoursesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
   const [filters, setFilters] = useState<CourseFilterState>({});
 
   // Fetch courses
@@ -93,15 +94,42 @@ export default function CoursesPage() {
     router.push(`/courses/${courseId}`);
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const data = await CourseService.getCourses();
+      setCourses(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to refresh');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 pt-24 pb-12">
       <div className="container mx-auto px-4">
         {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Explore Courses</h1>
-          <p className="text-gray-400">
-            {filteredCourses.length} courses available
-          </p>
+        <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2">Explore Courses</h1>
+            <p className="text-gray-400">{filteredCourses.length} courses available</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing || isLoading}
+              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium"
+            >
+              {refreshing ? 'Refreshing…' : 'Refresh'}
+            </button>
+            <button
+              onClick={() => setFilters({})}
+              className="px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium"
+            >
+              Reset Filters
+            </button>
+          </div>
         </div>
 
         {/* Main Content */}
