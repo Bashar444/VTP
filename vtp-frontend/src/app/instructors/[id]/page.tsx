@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { InstructorService, SubjectService } from '@/services/domain.service';
 import type { Instructor, Subject } from '@/types/domains';
 import { Star, Award, BookOpen, Clock, CheckCircle, Calendar } from 'lucide-react';
+import { BookingModal } from '@/components/meetings/BookingModal';
 
 export default function InstructorProfilePage() {
   const params = useParams();
@@ -18,6 +19,8 @@ export default function InstructorProfilePage() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showBooking, setShowBooking] = useState(false);
+  const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -26,12 +29,11 @@ export default function InstructorProfilePage() {
         const instructorData = await InstructorService.getInstructorById(instructorId);
         setInstructor(instructorData);
 
-        // Fetch subjects for specializations
+        // Fetch all subjects and filter for instructor specialization
+        const allSubj = await SubjectService.getSubjects();
+        setAllSubjects(allSubj);
         if (instructorData.specialization.length > 0) {
-          const allSubjects = await SubjectService.getSubjects();
-          const instructorSubjects = allSubjects.filter((s: Subject) =>
-            instructorData.specialization.includes(s.id)
-          );
+          const instructorSubjects = allSubj.filter((s: Subject) => instructorData.specialization.includes(s.id));
           setSubjects(instructorSubjects);
         }
       } catch (err) {
@@ -156,7 +158,7 @@ export default function InstructorProfilePage() {
 
             {/* Action Buttons */}
             <div className="flex flex-col gap-3">
-              <button className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors">
+              <button onClick={()=>setShowBooking(true)} className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors">
                 حجز جلسة
               </button>
               <button className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors">
@@ -275,6 +277,16 @@ export default function InstructorProfilePage() {
           </div>
         </div>
       </div>
+    {showBooking && instructor && (
+      <BookingModal
+        instructorId={instructor.id}
+        specializationSubjectIds={instructor.specialization}
+        allSubjects={allSubjects}
+        availability={instructor.availability}
+        onClose={()=>setShowBooking(false)}
+        onSuccess={()=>{/* could refetch meetings later */}}
+      />
+    )}
     </div>
   );
 }
