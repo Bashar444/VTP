@@ -253,13 +253,13 @@ func (h *APIHandler) DetectNetworkHandler(w http.ResponseWriter, r *http.Request
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"type":            network.Type,
+		"type":            network.NetworkType,
 		"latency_ms":      network.Latency,
 		"bandwidth_kbps":  network.Bandwidth,
 		"signal_strength": network.SignalStrength,
-		"detected_at":     getCurrentTime(),
+		"detected_at":     network.Timestamp,
 	})
-	log.Printf("✓ Network detection completed: %s", network.Type)
+	log.Printf("✓ Network detection completed: %v", network.NetworkType)
 }
 
 // GetEdgeNodesHandler returns available edge nodes
