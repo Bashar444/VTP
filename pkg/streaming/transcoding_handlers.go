@@ -25,10 +25,10 @@ func NewTranscodingHandlers(service *TranscodingService, logger *log.Logger) *Tr
 
 // RegisterTranscodingRoutes registers all transcoding HTTP routes
 func (h *TranscodingHandlers) RegisterTranscodingRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/api/v1/recordings/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/api/v1/transcode/", func(w http.ResponseWriter, r *http.Request) {
 		// Extract recording ID and route to appropriate handler
-		parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/api/v1/recordings/"), "/")
-		if len(parts) < 3 {
+		parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/api/v1/transcode/"), "/")
+		if len(parts) < 2 {
 			http.NotFound(w, r)
 			return
 		}
@@ -36,8 +36,8 @@ func (h *TranscodingHandlers) RegisterTranscodingRoutes(mux *http.ServeMux) {
 		recordingID := parts[0]
 
 		// Route to transcoding endpoints
-		if len(parts) >= 3 && parts[1] == "transcode" {
-			switch parts[2] {
+		if len(parts) >= 2 {
+			switch parts[1] {
 			case "quality":
 				if r.Method == http.MethodPost {
 					h.StartTranscodingHandler(w, r, recordingID)
@@ -59,7 +59,7 @@ func (h *TranscodingHandlers) RegisterTranscodingRoutes(mux *http.ServeMux) {
 			default:
 				http.NotFound(w, r)
 			}
-		} else if len(parts) >= 3 && parts[1] == "stream" && parts[2] == "master.m3u8" {
+		} else if len(parts) >= 2 && parts[1] == "master.m3u8" {
 			// Master playlist endpoint
 			if r.Method == http.MethodGet {
 				h.GetMasterPlaylistHandler(w, r, recordingID)
