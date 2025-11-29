@@ -47,7 +47,7 @@ func getFFmpegPath() string {
 		return path
 	}
 
-	log.Fatal("❌ FFmpeg not found. Install FFmpeg or set FFMPEG_PATH to the binary location.")
+	log.Println("⚠ FFmpeg not found (transcoding disabled). Install FFmpeg or set FFMPEG_PATH.")
 	return ""
 }
 
@@ -98,7 +98,9 @@ func main() {
 	// Get JWT configuration
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
-		log.Fatalf("❌ JWT_SECRET environment variable is required")
+		// Use default for development; MUST be set in production
+		jwtSecret = "vtp-dev-default-secret-change-in-production"
+		log.Println("⚠ JWT_SECRET not set, using development default (set JWT_SECRET in production!)")
 	}
 
 	jwtAccessHours := 24
