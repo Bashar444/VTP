@@ -8,6 +8,7 @@ import { useMediasoup } from '@/hooks/useMediasoup';
 import { VideoGrid } from '@/components/streaming/VideoGrid';
 import { StreamingControls } from '@/components/streaming/StreamingControls';
 import { ParticipantList, StreamingStatus } from '@/components/streaming/ParticipantList';
+import { ChatPanel } from '@/components/streaming/ChatPanel';
 import { AlertCircle, Loader } from 'lucide-react';
 
 interface Participant {
@@ -196,7 +197,7 @@ export default function StreamingPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Video Grid - Takes up 3 columns */}
+        {/* Video Grid + Controls - 3 columns */}
         <div className="lg:col-span-3 space-y-4">
           {/* Video Grid */}
           <div className="bg-gray-800 rounded-lg overflow-hidden">
@@ -219,7 +220,7 @@ export default function StreamingPage() {
           />
         </div>
 
-        {/* Sidebar - Takes up 1 column */}
+        {/* Sidebar - participants, status, chat */}
         <div className="space-y-4">
           {/* Participants List */}
           <ParticipantList
@@ -235,6 +236,7 @@ export default function StreamingPage() {
             resolution="1280x720"
             fps={30}
           />
+          <ChatPanel signaling={(signalingRef as any)?.current} roomId={roomId} />
         </div>
       </div>
 

@@ -40,6 +40,17 @@ export const useMediasoup = (roomId: string) => {
         authStore.token || ''
       );
 
+      // Auto-consume new producers when announced by signaling
+      signalingRef.current.onNewProducer(async (producerId: string, peerId: string, kind: string) => {
+        try {
+          // Only consume if connected and device loaded
+          if (!mediasoupDeviceRef.current || !consumerTransportRef.current) return;
+          await consumeRemoteStream(producerId, peerId);
+        } catch (err) {
+          console.warn('Failed to auto-consume producer', producerId, err);
+        }
+      });
+
       // Get router capabilities
       const routerCapabilities = await signalingRef.current.getRouterCapabilities();
 

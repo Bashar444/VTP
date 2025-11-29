@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/store';
 import { CourseService } from '@/services/course.service';
+import { useUnenrollCourse } from '@/hooks/useUnenrollCourse';
 import { CourseDetail } from '@/components/courses/CourseDetail';
 import { EnrollmentForm } from '@/components/courses/CourseFilters';
 import type { Course, Lecture } from '@/services/course.service';
@@ -28,6 +29,19 @@ export default function CourseDetailPage() {
   const queryClient = useQueryClient();
 
   const enrollMutation = useMutation({
+      const unenrollMutation = useUnenrollCourse(courseId);
+
+      const handleUnenroll = () => {
+        unenrollMutation.mutate(undefined, {
+          onSuccess: () => {
+            setIsEnrolled(false);
+            setProgress(0);
+          },
+          onError: (err: any) => {
+            setError(err?.message || 'Failed to unenroll');
+          },
+        });
+      };
     mutationKey: ['enroll', courseId],
     mutationFn: async () => {
       const enrollment = await CourseService.enrollCourse(courseId);
@@ -204,8 +218,17 @@ export default function CourseDetailPage() {
                   </div>
                 )
               ) : (
-                <div className="bg-gray-800 rounded-lg p-6">
-                  <h3 className="text-lg font-bold text-white mb-4">Your Progress</h3>
+                <div className="bg-gray-800 rounded-lg p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-white">Your Progress</h3>
+                    <button
+                      onClick={handleUnenroll}
+                      disabled={unenrollMutation.isLoading}
+                      className="text-xs px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
+                    >
+                      {unenrollMutation.isLoading ? 'Leaving…' : 'Unenroll'}
+                    </button>
+                  </div>
                   <div className="space-y-4">
                     <div>
                       <div className="flex justify-between mb-2">
@@ -222,6 +245,9 @@ export default function CourseDetailPage() {
                     <p className="text-sm text-gray-400">
                       Keep learning! {Math.round(100 - progress)}% of the course remaining
                     </p>
+                    {error && (
+                      <p className="text-xs text-red-400">{error}</p>
+                    )}
                   </div>
                 </div>
               )}
