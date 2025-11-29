@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/store';
 import { CourseService } from '@/services/course.service';
@@ -23,6 +24,36 @@ export default function CourseDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [showEnrollForm, setShowEnrollForm] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
+
+  const queryClient = useQueryClient();
+
+  const enrollMutation = useMutation({
+    mutationKey: ['enroll', courseId],
+    mutationFn: async () => {
+      const enrollment = await CourseService.enrollCourse(courseId);
+      return enrollment;
+    },
+    onMutate: async () => {
+      setIsEnrolling(true);
+      setError(null);
+    },
+    onSuccess: async () => {
+      setIsEnrolled(true);
+      setShowEnrollForm(false);
+      setProgress(0);
+      // Invalidate courses lists and featured caches if present
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['courses'] }),
+        queryClient.invalidateQueries({ queryKey: ['featured-courses'] }),
+      ]);
+    },
+    onError: (err: any) => {
+      setError(err?.message || 'Failed to enroll in course');
+    },
+    onSettled: () => {
+      setIsEnrolling(false);
+    },
+  });
 
   // Fetch course and lectures
   useEffect(() => {
@@ -59,23 +90,12 @@ export default function CourseDetailPage() {
     }
   }, [courseId, user]);
 
-  const handleEnroll = async () => {
+  const handleEnroll = () => {
     if (!user) {
       router.push('/auth/login');
       return;
     }
-
-    try {
-      setIsEnrolling(true);
-      await CourseService.enrollCourse(courseId);
-      setIsEnrolled(true);
-      setShowEnrollForm(false);
-      setProgress(0);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to enroll in course');
-    } finally {
-      setIsEnrolling(false);
-    }
+    enrollMutation.mutate();
   };
 
   const handleSelectLecture = (lectureId: string) => {
@@ -166,18 +186,20 @@ export default function CourseDetailPage() {
                   />
                 ) : (
                   <div className="bg-gray-800 rounded-lg p-6">
-                    <div className="text-center">
-                      <p className="text-gray-400 mb-4">
-                        {course.price
-                          ? `This course costs $${course.price}`
-                          : 'This course is free'}
+                    <div className="text-center space-y-4">
+                      <p className="text-gray-400">
+                        {course.price ? `This course costs $${course.price}` : 'This course is free'}
                       </p>
                       <button
                         onClick={() => setShowEnrollForm(true)}
-                        className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors"
+                        className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors disabled:opacity-50"
+                        disabled={isEnrolling}
                       >
-                        Enroll Now
+                        {isEnrolling ? 'Processing…' : 'Enroll Now'}
                       </button>
+                      {error && (
+                        <p className="text-xs text-red-400">{error}</p>
+                      )}
                     </div>
                   </div>
                 )
