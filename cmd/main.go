@@ -14,9 +14,12 @@ import (
 	"github.com/yourusername/vtp-platform/pkg/course"
 	"github.com/yourusername/vtp-platform/pkg/db"
 	"github.com/yourusername/vtp-platform/pkg/instructor"
+	"github.com/yourusername/vtp-platform/pkg/material"
+	"github.com/yourusername/vtp-platform/pkg/meeting"
 	"github.com/yourusername/vtp-platform/pkg/recording"
 	"github.com/yourusername/vtp-platform/pkg/signalling"
 	"github.com/yourusername/vtp-platform/pkg/streaming"
+	"github.com/yourusername/vtp-platform/pkg/subject"
 )
 
 func getStorageDir() string {
@@ -207,6 +210,9 @@ func main() {
 
 	// 3d2. Initialize Instructor Service (Phase 3+) - only if database available
 	var instructorHandlers *instructor.Handler
+	var subjectHandlers *subject.Handler
+	var meetingHandlers *meeting.Handler
+	var materialHandlers *material.Handler
 	
 	if database != nil {
 		log.Println("\n[3d2/7] Initializing instructor management service...")
@@ -217,8 +223,35 @@ func main() {
 		log.Println("      ✓ Instructor repository initialized")
 		log.Println("      ✓ Instructor service initialized")
 		log.Println("      ✓ Instructor handlers initialized")
+
+		log.Println("\n[3d3/7] Initializing subject management service...")
+		subjectRepo := subject.NewRepository(database.Conn())
+		subjectService := subject.NewService(subjectRepo)
+		subjectHandlers = subject.NewHandler(subjectService)
+
+		log.Println("      ✓ Subject repository initialized")
+		log.Println("      ✓ Subject service initialized")
+		log.Println("      ✓ Subject handlers initialized")
+
+		log.Println("\n[3d4/7] Initializing meeting management service...")
+		meetingRepo := meeting.NewRepository(database.Conn())
+		meetingService := meeting.NewService(meetingRepo)
+		meetingHandlers = meeting.NewHandler(meetingService)
+
+		log.Println("      ✓ Meeting repository initialized")
+		log.Println("      ✓ Meeting service initialized")
+		log.Println("      ✓ Meeting handlers initialized")
+
+		log.Println("\n[3d5/7] Initializing study material management service...")
+		materialRepo := material.NewRepository(database.Conn())
+		materialService := material.NewService(materialRepo)
+		materialHandlers = material.NewHandler(materialService)
+
+		log.Println("      ✓ Study material repository initialized")
+		log.Println("      ✓ Study material service initialized")
+		log.Println("      ✓ Study material handlers initialized")
 	} else {
-		log.Println("\n[3d2/7] Skipping instructor service (no database)")
+		log.Println("\n[3d2-5/7] Skipping instructor/subject/meeting/material services (no database)")
 	}
 
 	// 3e. Initialize Adaptive Bitrate (ABR) Engine (Phase 2B)
@@ -397,6 +430,153 @@ func main() {
 		log.Println("      ✓ PUT /api/v1/instructors/{id}")
 		log.Println("      ✓ DELETE /api/v1/instructors/{id}")
 		log.Println("      ✓ GET /api/v1/instructors/{id}/availability")
+	}
+
+	// Subject management endpoints (Phase 3+) - only if database available
+	if subjectHandlers != nil {
+		http.HandleFunc("/api/v1/subjects", func(w http.ResponseWriter, r *http.Request) {
+			switch r.Method {
+			case http.MethodGet:
+				subjectHandlers.ListSubjects(w, r)
+			case http.MethodPost:
+				subjectHandlers.CreateSubject(w, r)
+			default:
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		http.HandleFunc("/api/v1/subjects/", func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/api/v1/subjects/" {
+				http.Error(w, "Subject ID required", http.StatusBadRequest)
+				return
+			}
+
+			switch r.Method {
+			case http.MethodGet:
+				subjectHandlers.GetSubject(w, r)
+			case http.MethodPut:
+				subjectHandlers.UpdateSubject(w, r)
+			case http.MethodDelete:
+				subjectHandlers.DeleteSubject(w, r)
+			default:
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		log.Println("      ✓ POST /api/v1/subjects")
+		log.Println("      ✓ GET /api/v1/subjects")
+		log.Println("      ✓ GET /api/v1/subjects/{id}")
+		log.Println("      ✓ PUT /api/v1/subjects/{id}")
+		log.Println("      ✓ DELETE /api/v1/subjects/{id}")
+	}
+
+	// Meeting management endpoints (Phase 3+) - only if database available
+	if meetingHandlers != nil {
+		http.HandleFunc("/api/v1/meetings", func(w http.ResponseWriter, r *http.Request) {
+			switch r.Method {
+			case http.MethodGet:
+				meetingHandlers.ListMeetings(w, r)
+			case http.MethodPost:
+				meetingHandlers.CreateMeeting(w, r)
+			default:
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		http.HandleFunc("/api/v1/meetings/", func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/api/v1/meetings/" {
+				http.Error(w, "Meeting ID required", http.StatusBadRequest)
+				return
+			}
+
+			// Check for action endpoints
+			if len(r.URL.Path) > 19 {
+				if r.URL.Path[len(r.URL.Path)-7:] == "/cancel" {
+					if r.Method == http.MethodPost {
+						meetingHandlers.CancelMeeting(w, r)
+					} else {
+						http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+					}
+					return
+				}
+				if r.URL.Path[len(r.URL.Path)-9:] == "/complete" {
+					if r.Method == http.MethodPost {
+						meetingHandlers.CompleteMeeting(w, r)
+					} else {
+						http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+					}
+					return
+				}
+			}
+
+			switch r.Method {
+			case http.MethodGet:
+				meetingHandlers.GetMeeting(w, r)
+			case http.MethodPut:
+				meetingHandlers.UpdateMeeting(w, r)
+			case http.MethodDelete:
+				meetingHandlers.DeleteMeeting(w, r)
+			default:
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		log.Println("      ✓ POST /api/v1/meetings")
+		log.Println("      ✓ GET /api/v1/meetings")
+		log.Println("      ✓ GET /api/v1/meetings/{id}")
+		log.Println("      ✓ PUT /api/v1/meetings/{id}")
+		log.Println("      ✓ DELETE /api/v1/meetings/{id}")
+		log.Println("      ✓ POST /api/v1/meetings/{id}/cancel")
+		log.Println("      ✓ POST /api/v1/meetings/{id}/complete")
+	}
+
+	// Study material endpoints (Phase 3+) - only if database available
+	if materialHandlers != nil {
+		http.HandleFunc("/api/v1/materials", func(w http.ResponseWriter, r *http.Request) {
+			switch r.Method {
+			case http.MethodGet:
+				materialHandlers.ListMaterials(w, r)
+			case http.MethodPost:
+				materialHandlers.CreateMaterial(w, r)
+			default:
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		http.HandleFunc("/api/v1/materials/", func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/api/v1/materials/" {
+				http.Error(w, "Material ID required", http.StatusBadRequest)
+				return
+			}
+
+			// Check for download endpoint
+			if len(r.URL.Path) > 21 && r.URL.Path[len(r.URL.Path)-9:] == "/download" {
+				if r.Method == http.MethodGet {
+					materialHandlers.DownloadMaterial(w, r)
+				} else {
+					http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+				}
+				return
+			}
+
+			switch r.Method {
+			case http.MethodGet:
+				materialHandlers.GetMaterial(w, r)
+			case http.MethodPut:
+				materialHandlers.UpdateMaterial(w, r)
+			case http.MethodDelete:
+				materialHandlers.DeleteMaterial(w, r)
+			default:
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		log.Println("      ✓ POST /api/v1/materials")
+		log.Println("      ✓ GET /api/v1/materials")
+		log.Println("      ✓ GET /api/v1/materials/{id}")
+		log.Println("      ✓ PUT /api/v1/materials/{id}")
+		log.Println("      ✓ DELETE /api/v1/materials/{id}")
+		log.Println("      ✓ GET /api/v1/materials/{id}/download")
 	}
 
 	// Adaptive Bitrate (ABR) endpoints (Phase 2B)
