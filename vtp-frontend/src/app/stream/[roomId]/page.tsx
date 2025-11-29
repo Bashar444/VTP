@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useStreamRoom } from '@/hooks/useStreamRoom';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
 import { useMediasoup } from '@/hooks/useMediasoup';
@@ -40,6 +41,7 @@ export default function StreamingPage() {
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isInitializing, setIsInitializing] = useState(true);
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const { peers, connected: signalingConnected, getParticipants } = useStreamRoom(roomId);
   const [streamDuration, setStreamDuration] = useState(0);
   const [recordingStatus, setRecordingStatus] = useState<'idle' | 'recording' | 'paused'>(
     'idle'
@@ -108,6 +110,27 @@ export default function StreamingPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Sync participants from signaling
+  useEffect(() => {
+    if (signalingConnected) {
+      // Initial fetch
+      getParticipants();
+    }
+  }, [signalingConnected, getParticipants]);
+
+  useEffect(() => {
+    // Map peers into Participant type for UI
+    const mapped: Participant[] = peers.map(p => ({
+      id: p.id,
+      name: p.name || 'Guest',
+      role: (p as any).role === 'instructor' ? 'instructor' : 'student',
+      isAudioEnabled: true,
+      isVideoEnabled: true,
+      joinedAt: p.joinedAt,
+    }));
+    setParticipants(mapped);
+  }, [peers]);
+
   // Check authentication
   if (!authStore.isAuthenticated) {
     return (
@@ -165,7 +188,7 @@ export default function StreamingPage() {
           <div className="text-right">
             <p className="text-gray-400">Instructor: {authStore.user?.firstName || 'Unknown'}</p>
             <p className="text-gray-400">
-              Connection: <span className="text-green-400">Connected</span>
+              Connection: <span className="text-green-400">{isConnected ? 'Media' : 'Media…'} / {signalingConnected ? 'Signal' : 'Signal…'}</span>
             </p>
           </div>
         </div>
