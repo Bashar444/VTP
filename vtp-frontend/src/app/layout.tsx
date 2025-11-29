@@ -21,8 +21,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen flex flex-col">
+    <html lang="ar" dir="rtl">
+      <body className="min-h-screen flex flex-col font-sans bg-white text-gray-900">
         <Providers>
           {children}
         </Providers>

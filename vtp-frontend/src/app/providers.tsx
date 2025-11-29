@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { NavBar } from '@/components/NavBar';
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages, defaultLocale } from '@/i18n/config';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -14,10 +16,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
     },
   }));
 
+  const messages = getMessages(defaultLocale);
   return (
     <QueryClientProvider client={queryClient}>
-      <NavBar />
-      <div className="flex-1">{children}</div>
+      <NextIntlClientProvider locale={defaultLocale} messages={messages} timeZone="Asia/Damascus">
+        <NavBar />
+        <div className="flex-1" dir="rtl">{children}</div>
+      </NextIntlClientProvider>
     </QueryClientProvider>
   );
 }
