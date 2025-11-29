@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/store/auth';
+import { useAuth } from '@/store';
 import { AnalyticsService } from '@/services/analytics.service';
 import { AnalyticsCard, StatGrid, InsightCard } from '@/components/analytics/AnalyticsCard';
 import { LineChart, BarChart, PieChart } from '@/components/analytics/Charts';
