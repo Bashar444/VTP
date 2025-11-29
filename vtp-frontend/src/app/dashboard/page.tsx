@@ -19,6 +19,7 @@ import QualitySelector from '@/components/QualitySelector';
 import EdgeNodeViewer from '@/components/EdgeNodeViewer';
 import MetricsDisplay from '@/components/MetricsDisplay';
 import { g5Service } from '@/services/g5Service';
+import { useQuery } from '@tanstack/react-query';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -29,8 +30,12 @@ export default function DashboardPage() {
   const [alerts, setAlerts] = useState<SystemAlert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [globalQuality, setGlobalQuality] = useState<number | null>(null);
-  const [networkQualityLoading, setNetworkQualityLoading] = useState(false);
+  const { data: networkQuality, isLoading: networkQualityLoading } = useQuery({
+    queryKey: ['network-quality'],
+    queryFn: async () => await g5Service.getNetworkQuality(),
+    refetchInterval: 30000,
+    staleTime: 15000,
+  });
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -58,16 +63,6 @@ export default function DashboardPage() {
         setCourses(courseData);
         setAlerts(systemAlerts);
         // Also fetch network quality
-        try {
-          setNetworkQualityLoading(true);
-          const quality = await g5Service.getNetworkQuality();
-          setGlobalQuality(quality);
-        } catch (e) {
-          // Non-blocking
-          console.warn('Failed to fetch network quality');
-        } finally {
-          setNetworkQualityLoading(false);
-        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load analytics');
       } finally {
@@ -151,7 +146,7 @@ export default function DashboardPage() {
               },
               {
                 title: 'Network Quality',
-                value: networkQualityLoading ? '…' : (globalQuality !== null ? `${globalQuality}%` : 'N/A'),
+                value: networkQualityLoading ? '…' : (networkQuality !== undefined ? `${networkQuality}%` : 'N/A'),
                 icon: <Activity className="w-6 h-6" />,
                 trend: {
                   value: 0,

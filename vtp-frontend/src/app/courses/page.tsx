@@ -1,9 +1,10 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/store';
 import { CourseService } from '@/services/course.service';
+import { useCourses } from '@/hooks/useCourses';
 import { CourseCard, CourseList } from '@/components/courses/CourseCard';
 import { CourseFilters, CourseFilterState } from '@/components/courses/CourseFilters';
 import type { Course } from '@/services/course.service';
@@ -12,29 +13,18 @@ export default function CoursesPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, isLoading, error, refetch } = useCourses();
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [filters, setFilters] = useState<CourseFilterState>({});
 
   // Fetch courses
   useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        setIsLoading(true);
-        const data = await CourseService.getCourses();
-        setCourses(data);
-        setFilteredCourses(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load courses');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCourses();
-  }, []);
+    if (data) {
+      setCourses(data.courses);
+      setFilteredCourses(data.courses);
+    }
+  }, [data]);
 
   // Apply filters
   useEffect(() => {
@@ -97,10 +87,7 @@ export default function CoursesPage() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      const data = await CourseService.getCourses();
-      setCourses(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to refresh');
+      await refetch();
     } finally {
       setRefreshing(false);
     }
@@ -148,7 +135,7 @@ export default function CoursesPage() {
           <div className="lg:col-span-3">
             {error && (
               <div className="bg-red-900/20 border border-red-700 rounded-lg p-4 mb-6">
-                <p className="text-red-400">{error}</p>
+                <p className="text-red-400">{(error as Error).message}</p>
               </div>
             )}
 

@@ -1,37 +1,9 @@
 "use client";
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CourseService } from '@/services/course.service';
-
-interface FeaturedCourse {
-  id: string;
-  title: string;
-  description: string;
-  thumbnail?: string;
-  rating?: number;
-  studentCount?: number;
-}
+import { useFeaturedCourses } from '@/hooks/useFeaturedCourses';
 
 export default function Home() {
-  const [courses, setCourses] = useState<FeaturedCourse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        setError(null);
-        const data = await CourseService.getFeaturedCourses(4);
-        setCourses(data || []);
-      } catch (e: any) {
-        setError(e.message || 'Failed to load featured courses');
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
-
+  const { data: courses = [], isLoading: loading, error } = useFeaturedCourses(4);
   return (
     <main className="max-w-7xl mx-auto px-4 py-10">
       <section className="mb-10 text-center">
@@ -58,7 +30,7 @@ export default function Home() {
           </div>
         )}
         {!loading && error && (
-          <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded text-sm">{error}</div>
+          <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded text-sm">{(error as Error).message}</div>
         )}
         {!loading && !error && courses.length === 0 && (
           <p className="text-sm text-gray-600">No featured courses available yet.</p>
