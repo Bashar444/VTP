@@ -1,4 +1,5 @@
-'use client';
+"use client";
+export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -37,8 +38,11 @@ export default function VideoPlaybackPage() {
           VideoService.getVideoMetadata(videoId),
           VideoService.getSubtitles(videoId),
         ]);
-        setVideo(videoData);
-        setSubtitles(subtitleData);
+        // Sanitize video metadata and subtitles to ensure plain objects
+        const plainVideo: VideoMetadata = JSON.parse(JSON.stringify(videoData)) as VideoMetadata;
+        const plainSubtitles: Array<{ language: string; url: string }> = subtitleData.map(s => JSON.parse(JSON.stringify(s)) as { language: string; url: string });
+        setVideo(plainVideo);
+        setSubtitles(plainSubtitles);
         setError(null);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to load video';

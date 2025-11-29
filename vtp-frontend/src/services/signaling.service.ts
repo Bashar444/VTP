@@ -173,6 +173,16 @@ export default class SignalingService {
     });
   }
 
+  // Chat history (graceful failure if endpoint not implemented)
+  async getChatHistory(roomId: string) {
+    try {
+      const response = await api.get(`/streaming/rooms/${roomId}/chat`);
+      return response.data;
+    } catch (e) {
+      return [];
+    }
+  }
+
   onNewProducer(callback: (producerId: string, peerId: string, kind: string) => void) {
     this.socket.on('newProducer', ({ producerId, peerId, kind }: any) => {
       callback(producerId, peerId, kind);

@@ -4,6 +4,39 @@ import { Send, MessageSquare } from 'lucide-react';
 import SignalingService from '@/services/signaling.service';
 import { useAuthStore } from '@/store/auth.store';
 
+  );
+};
+        ))}
+        {messages.length === 0 && (
+          <div className="text-gray-500 text-sm">No messages yet.</div>
+        )}
+      </div>
+      <div className="pt-3 flex items-center gap-2">
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') sendMessage(); }}
+          placeholder="Type a message"
+          className="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+        />
+        <button
+          onClick={sendMessage}
+          disabled={!input.trim()}
+          className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded text-white text-sm flex items-center gap-1"
+        >
+          <Send size={16} />
+          Send
+        </button>
+      </div>
+    </div>
+  );
+};
+"use client";
+import { useEffect, useState, useRef } from 'react';
+import { Send, MessageSquare } from 'lucide-react';
+import SignalingService from '@/services/signaling.service';
+import { useAuthStore } from '@/store/auth.store';
+
 interface ChatMessage {
   id: string;
   userId: string;
@@ -30,6 +63,26 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ signaling, roomId, classNa
 
     const socket: any = (signaling as any).socket;
     if (!socket) return;
+
+    // Load history once on mount
+    (async () => {
+      try {
+        if (signaling.getChatHistory) {
+          const history = await signaling.getChatHistory(roomId);
+          if (Array.isArray(history)) {
+            setMessages(history.map((h: any) => ({
+              id: h.id || crypto.randomUUID(),
+              userId: h.userId,
+              name: h.name,
+              text: h.text,
+              timestamp: h.timestamp || Date.now(),
+            })));
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load chat history', err);
+      }
+    })();
 
     const handleChatMessage = (msg: any) => {
       setMessages(prev => [...prev, {

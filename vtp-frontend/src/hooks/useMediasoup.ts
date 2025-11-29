@@ -24,8 +24,12 @@ export const useMediasoup = (roomId: string) => {
   const consumerTransportRef = useRef<any>(null);
   const audioProducerRef = useRef<any>(null);
   const videoProducerRef = useRef<any>(null);
+  const originalCameraTrackRef = useRef<MediaStreamTrack | null>(null);
   const peersRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const signalingRef = useRef<SignalingService | null>(null);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [recordingStatus, setRecordingStatus] = useState<'idle' | 'recording'>('idle');
+  const recordingSessionIdRef = useRef<string | null>(null);
 
   // Initialize Mediasoup connection
   const initializeMediasoup = useCallback(async () => {
@@ -50,6 +54,14 @@ export const useMediasoup = (roomId: string) => {
           console.warn('Failed to auto-consume producer', producerId, err);
         }
       });
+
+      // Reconnection / status events
+      const socket: any = (signalingRef.current as any).socket;
+      if (socket) {
+        socket.on('reconnect', () => console.log('Signaling reconnected'));
+        socket.on('reconnect_attempt', () => console.log('Signaling reconnect attempt'));
+        socket.on('disconnect', (reason: string) => console.log('Signaling disconnected:', reason));
+      }
 
       // Get router capabilities
       const routerCapabilities = await signalingRef.current.getRouterCapabilities();
@@ -182,6 +194,36 @@ export const useMediasoup = (roomId: string) => {
     }
   }, []);
 
+  // Screen share toggle
+  const toggleScreenShare = useCallback(async (enable: boolean) => {
+    if (enable) {
+      try {
+        const displayStream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true, audio: false });
+        const screenTrack = displayStream.getVideoTracks()[0];
+        if (!screenTrack) throw new Error('No screen track');
+        // Save original camera track
+        if (localStream && localStream.getVideoTracks()[0]) {
+          originalCameraTrackRef.current = localStream.getVideoTracks()[0];
+        }
+        if (videoProducerRef.current) {
+          await videoProducerRef.current.replaceTrack({ track: screenTrack });
+        }
+        setIsScreenSharing(true);
+        screenTrack.onended = () => {
+          // Auto disable when user stops share
+          toggleScreenShare(false);
+        };
+      } catch (err) {
+        console.warn('Screen share failed', err);
+      }
+    } else {
+      if (originalCameraTrackRef.current && videoProducerRef.current) {
+        await videoProducerRef.current.replaceTrack({ track: originalCameraTrackRef.current });
+      }
+      setIsScreenSharing(false);
+    }
+  }, [localStream]);
+
   // Consume remote stream
   const consumeRemoteStream = useCallback(async (producerId: string, peerId: string) => {
     try {
@@ -241,10 +283,43 @@ export const useMediasoup = (roomId: string) => {
       setLocalStream(null);
       setRemoteStreams(new Map());
       setIsConnected(false);
+      setRecordingStatus('idle');
+      recordingSessionIdRef.current = null;
     } catch (err) {
       console.error('Cleanup error:', err);
     }
   }, [localStream]);
+
+  // Start recording
+  const startRecording = useCallback(async () => {
+    if (!signalingRef.current || recordingStatus === 'recording') return;
+    try {
+      const res = await signalingRef.current.recordSession(roomId);
+      const sessionId = res?.sessionId || res?.id || null;
+      if (sessionId) {
+        recordingSessionIdRef.current = sessionId;
+        setRecordingStatus('recording');
+      }
+    } catch (err) {
+      console.warn('Failed to start recording', err);
+    }
+  }, [roomId, recordingStatus]);
+
+  // Stop recording
+  const stopRecording = useCallback(async () => {
+    if (!signalingRef.current || recordingStatus !== 'recording') return;
+    try {
+      const sessionId = recordingSessionIdRef.current;
+      if (sessionId) {
+        await signalingRef.current.stopRecording(sessionId);
+      }
+    } catch (err) {
+      console.warn('Failed to stop recording', err);
+    } finally {
+      setRecordingStatus('idle');
+      recordingSessionIdRef.current = null;
+    }
+  }, [recordingStatus]);
 
   // Initialize on mount
   useEffect(() => {
@@ -263,7 +338,13 @@ export const useMediasoup = (roomId: string) => {
     getLocalStream,
     toggleAudio,
     toggleVideo,
+    toggleScreenShare,
+    isScreenSharing,
+    recordingStatus,
+    startRecording,
+    stopRecording,
     consumeRemoteStream,
     disconnect,
+    signaling: signalingRef.current,
   };
 };

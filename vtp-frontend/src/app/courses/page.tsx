@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -21,8 +22,10 @@ export default function CoursesPage() {
   // Fetch courses
   useEffect(() => {
     if (data) {
-      setCourses(data.courses);
-      setFilteredCourses(data.courses);
+      // Sanitize fetched course data to ensure plain objects for Next.js client serialization
+      const plainCourses: Course[] = data.courses.map(c => JSON.parse(JSON.stringify(c)) as Course);
+      setCourses(plainCourses);
+      setFilteredCourses(plainCourses);
     }
   }, [data]);
 

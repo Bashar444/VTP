@@ -1,4 +1,5 @@
-'use client';
+"use client";
+export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -36,9 +37,11 @@ export default function MyCoursesPage() {
           CourseService.getEnrolledCourses(),
           CourseService.getCompletedCourses(),
         ]);
-
-        setEnrolledCourses(enrolled);
-        setCompletedCourses(completed);
+        // Sanitize to plain objects to avoid Next.js serialization issues
+        const plainEnrolled: EnrolledCourse[] = enrolled.map(c => JSON.parse(JSON.stringify(c)) as EnrolledCourse);
+        const plainCompleted: Course[] = completed.map(c => JSON.parse(JSON.stringify(c)) as Course);
+        setEnrolledCourses(plainEnrolled);
+        setCompletedCourses(plainCompleted);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load courses');
       } finally {

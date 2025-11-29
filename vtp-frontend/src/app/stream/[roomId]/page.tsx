@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useCallback } from 'react';
 import { useStreamRoom } from '@/hooks/useStreamRoom';
@@ -8,7 +9,7 @@ import { useMediasoup } from '@/hooks/useMediasoup';
 import { VideoGrid } from '@/components/streaming/VideoGrid';
 import { StreamingControls } from '@/components/streaming/StreamingControls';
 import { ParticipantList, StreamingStatus } from '@/components/streaming/ParticipantList';
-import { ChatPanel } from '@/components/streaming/ChatPanel';
+import { ChatPanelFixed } from '@/components/streaming/ChatPanelFixed';
 import { AlertCircle, Loader } from 'lucide-react';
 
 interface Participant {
@@ -34,8 +35,14 @@ export default function StreamingPage() {
     getLocalStream,
     toggleAudio,
     toggleVideo,
+    toggleScreenShare,
+    isScreenSharing,
+    recordingStatus,
+    startRecording,
+    stopRecording,
     consumeRemoteStream,
     disconnect,
+    signaling,
   } = useMediasoup(roomId);
 
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
@@ -44,9 +51,7 @@ export default function StreamingPage() {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const { peers, connected: signalingConnected, getParticipants } = useStreamRoom(roomId);
   const [streamDuration, setStreamDuration] = useState(0);
-  const [recordingStatus, setRecordingStatus] = useState<'idle' | 'recording' | 'paused'>(
-    'idle'
-  );
+  // recordingStatus now sourced from useMediasoup hook
   const [error, setError] = useState<string | null>(null);
 
   // Initialize local stream
@@ -101,6 +106,30 @@ export default function StreamingPage() {
       router.push('/courses');
     }
   }, [disconnect, router]);
+
+  // Handle screen share toggle
+  const handleToggleScreenShare = useCallback(async (enable: boolean) => {
+    try {
+      await toggleScreenShare(enable);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to toggle screen share';
+      setError(message);
+    }
+  }, [toggleScreenShare]);
+
+  // Handle recording toggle (start/stop)
+  const handleToggleRecording = useCallback(async () => {
+    try {
+      if (recordingStatus === 'recording') {
+        await stopRecording();
+      } else if (recordingStatus === 'idle') {
+        await startRecording();
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to toggle recording';
+      setError(message);
+    }
+  }, [recordingStatus, startRecording, stopRecording]);
 
   // Update stream duration
   useEffect(() => {
@@ -213,8 +242,11 @@ export default function StreamingPage() {
           <StreamingControls
             isAudioEnabled={isAudioEnabled}
             isVideoEnabled={isVideoEnabled}
+            recordingStatus={recordingStatus === 'recording' ? 'recording' : 'idle'}
             onToggleAudio={handleToggleAudio}
             onToggleVideo={handleToggleVideo}
+            onToggleScreenShare={handleToggleScreenShare}
+            onToggleRecording={handleToggleRecording}
             onLeave={handleLeaveCall}
             isLoading={isInitializing}
           />
@@ -236,7 +268,7 @@ export default function StreamingPage() {
             resolution="1280x720"
             fps={30}
           />
-          <ChatPanel signaling={(signalingRef as any)?.current} roomId={roomId} />
+          <ChatPanelFixed signaling={signaling as any} roomId={roomId} />
         </div>
       </div>
 

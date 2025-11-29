@@ -5,9 +5,11 @@ import { cn } from '@/utils/cn';
 interface StreamingControlsProps {
   isAudioEnabled: boolean;
   isVideoEnabled: boolean;
+  recordingStatus?: 'idle' | 'recording';
   onToggleAudio: (enabled: boolean) => Promise<void>;
   onToggleVideo: (enabled: boolean) => Promise<void>;
   onToggleScreenShare?: (enabled: boolean) => Promise<void>;
+  onToggleRecording?: () => Promise<void>;
   onSettings?: () => void;
   onLeave: () => void;
   isLoading?: boolean;
@@ -17,9 +19,11 @@ interface StreamingControlsProps {
 export const StreamingControls: React.FC<StreamingControlsProps> = ({
   isAudioEnabled,
   isVideoEnabled,
+  recordingStatus = 'idle',
   onToggleAudio,
   onToggleVideo,
   onToggleScreenShare,
+  onToggleRecording,
   onSettings,
   onLeave,
   isLoading = false,
@@ -130,6 +134,23 @@ export const StreamingControls: React.FC<StreamingControlsProps> = ({
           ) : (
             <Share2 size={20} />
           )}
+        </button>
+      )}
+
+      {/* Recording */}
+      {onToggleRecording && (
+        <button
+          onClick={onToggleRecording}
+          disabled={isLoading}
+          className={cn(
+            'flex items-center justify-center w-12 h-12 rounded-full transition-colors',
+            recordingStatus === 'recording'
+              ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
+              : 'bg-gray-700 hover:bg-gray-600 text-white'
+          )}
+          title={recordingStatus === 'recording' ? 'Stop recording' : 'Start recording'}
+        >
+          {recordingStatus === 'recording' ? 'REC' : 'REC'}
         </button>
       )}
 

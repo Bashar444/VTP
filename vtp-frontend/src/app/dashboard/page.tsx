@@ -1,4 +1,5 @@
-'use client';
+"use client";
+export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -57,11 +58,15 @@ export default function DashboardPage() {
           AnalyticsService.getTopPerformingCourses(10),
           AnalyticsService.getSystemAlerts(true),
         ]);
-
-        setMetrics(dashMetrics);
-        setEngagement(engagementData);
-        setCourses(courseData);
-        setAlerts(systemAlerts);
+        // Sanitize fetched analytics data to ensure all are plain objects
+        const plainMetrics: DashboardMetrics = JSON.parse(JSON.stringify(dashMetrics)) as DashboardMetrics;
+        const plainEngagement: EngagementMetrics[] = engagementData.map(e => JSON.parse(JSON.stringify(e)) as EngagementMetrics);
+        const plainCoursesPerf: CoursePerformance[] = courseData.map(c => JSON.parse(JSON.stringify(c)) as CoursePerformance);
+        const plainAlerts: SystemAlert[] = systemAlerts.map(a => JSON.parse(JSON.stringify(a)) as SystemAlert);
+        setMetrics(plainMetrics);
+        setEngagement(plainEngagement);
+        setCourses(plainCoursesPerf);
+        setAlerts(plainAlerts);
         // Also fetch network quality
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load analytics');

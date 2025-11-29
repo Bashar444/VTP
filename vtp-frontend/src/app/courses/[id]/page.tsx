@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -27,21 +28,17 @@ export default function CourseDetailPage() {
   const [isEnrolling, setIsEnrolling] = useState(false);
 
   const queryClient = useQueryClient();
-
-  const enrollMutation = useMutation({
-      const unenrollMutation = useUnenrollCourse(courseId);
-
-      const handleUnenroll = () => {
-        unenrollMutation.mutate(undefined, {
-          onSuccess: () => {
-            setIsEnrolled(false);
-            setProgress(0);
-          },
-          onError: (err: any) => {
-            setError(err?.message || 'Failed to unenroll');
-          },
-        });
-      };
+  // Unenroll mutation & handler
+  const unenrollMutation = useUnenrollCourse(courseId);
+  const handleUnenroll = () => {
+    unenrollMutation.mutate(undefined, {
+      onSuccess: () => {
+        setIsEnrolled(false);
+        setProgress(0);
+      },
+      onError: (err: any) => {
+        setError(err?.message || 'Failed to unenroll');
+      },
     mutationKey: ['enroll', courseId],
     mutationFn: async () => {
       const enrollment = await CourseService.enrollCourse(courseId);
@@ -56,6 +53,31 @@ export default function CourseDetailPage() {
       setShowEnrollForm(false);
       setProgress(0);
       // Invalidate courses lists and featured caches if present
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['courses'] }),
+        queryClient.invalidateQueries({ queryKey: ['featured-courses'] }),
+      ]);
+    },
+    onError: (err: any) => {
+      setError(err?.message || 'Failed to enroll in course');
+    },
+    });
+  };
+
+  const enrollMutation = useMutation({
+    mutationKey: ['enroll', courseId],
+    mutationFn: async () => {
+      const enrollment = await CourseService.enrollCourse(courseId);
+      return enrollment;
+    },
+    onMutate: async () => {
+      setIsEnrolling(true);
+      setError(null);
+    },
+    onSuccess: async () => {
+      setIsEnrolled(true);
+      setShowEnrollForm(false);
+      setProgress(0);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['courses'] }),
         queryClient.invalidateQueries({ queryKey: ['featured-courses'] }),
@@ -79,8 +101,9 @@ export default function CourseDetailPage() {
           CourseService.getCourseLectures(courseId),
         ]);
 
-        setCourse(courseData);
-        setLectures(lecturesData);
+        // Ensure plain objects for client components
+        setCourse(JSON.parse(JSON.stringify(courseData)));
+        setLectures(JSON.parse(JSON.stringify(lecturesData)));
 
         // Check if user is enrolled and get progress
         if (user) {
