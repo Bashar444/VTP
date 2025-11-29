@@ -54,7 +54,7 @@ export default function CourseDetailPage() {
     onSuccess: async () => {
       setIsEnrolled(true);
       setShowEnrollForm(false);
-      setProgress(0);
+      setProgress(null);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['courses'] }),
         queryClient.invalidateQueries({ queryKey: ['featured-courses'] }),
