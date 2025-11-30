@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -319,6 +320,14 @@ func main() {
 		fmt.Fprintf(w, `{"status":"ok","service":"vtp-platform","version":"1.0.0"}`)
 	})
 	log.Println("      ✓ GET /health")
+
+	// Performance profiling endpoints (pprof)
+	// Available at: /debug/pprof/
+	log.Println("      ✓ GET /debug/pprof/ (profiling endpoints)")
+	log.Println("        - /debug/pprof/heap (memory)")
+	log.Println("        - /debug/pprof/goroutine (goroutines)")
+	log.Println("        - /debug/pprof/profile (CPU - 30s)")
+	log.Println("        - /debug/pprof/trace (execution trace)")
 
 	// Authentication endpoints (public)
 	http.HandleFunc("/api/v1/auth/register", authHandler.RegisterHandler)
