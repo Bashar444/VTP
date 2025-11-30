@@ -1,10 +1,11 @@
 import { LoginRequest, LoginResponse, User, RegisterRequest } from '@/types/api';
 import { api } from './api.client';
+import { API_ENDPOINTS } from '@/utils/api.config';
 
 export class AuthService {
   static async login(credentials: LoginRequest): Promise<LoginResponse> {
     const response = await api.post<LoginResponse>(
-      '/auth/login',
+      API_ENDPOINTS.auth.login,
       credentials
     );
     return response.data;
@@ -12,7 +13,7 @@ export class AuthService {
 
   static async register(data: RegisterRequest): Promise<LoginResponse> {
     const response = await api.post<LoginResponse>(
-      '/auth/register',
+      API_ENDPOINTS.auth.register,
       data
     );
     return response.data;
@@ -20,19 +21,19 @@ export class AuthService {
 
   static async refreshToken(token: string): Promise<LoginResponse> {
     const response = await api.post<LoginResponse>(
-      '/auth/refresh',
+      API_ENDPOINTS.auth.refresh,
       { refreshToken: token }
     );
     return response.data;
   }
 
   static async logout(): Promise<void> {
-    await api.post('/auth/logout', {});
+    await api.post(API_ENDPOINTS.auth.logout, {});
   }
 
   static async verifyEmail(email: string): Promise<{ available: boolean }> {
     const response = await api.post<{ available: boolean }>(
-      '/auth/verify-email',
+      API_ENDPOINTS.auth.verifyEmail,
       { email }
     );
     return response.data;
@@ -40,7 +41,7 @@ export class AuthService {
 
   static async forgotPassword(email: string): Promise<{ success: boolean }> {
     const response = await api.post<{ success: boolean }>(
-      '/auth/forgot-password',
+      API_ENDPOINTS.auth.resetPassword,
       { email }
     );
     return response.data;
@@ -51,19 +52,19 @@ export class AuthService {
     password: string
   ): Promise<{ success: boolean }> {
     const response = await api.post<{ success: boolean }>(
-      '/auth/reset-password',
+      API_ENDPOINTS.auth.resetPassword,
       { token, password }
     );
     return response.data;
   }
 
   static async getCurrentUser(): Promise<User> {
-    const response = await api.get<User>('/auth/me');
+    const response = await api.get<User>(API_ENDPOINTS.auth.profile);
     return response.data;
   }
 
   static async updateProfile(data: Partial<User>): Promise<User> {
-    const response = await api.put<User>('/auth/profile', data);
+    const response = await api.put<User>(API_ENDPOINTS.auth.profile, data);
     return response.data;
   }
 }

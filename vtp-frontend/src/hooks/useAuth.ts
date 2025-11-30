@@ -1,5 +1,6 @@
 import { useAuthStore } from '@/store/auth.store';
 import { useCallback } from 'react';
+import { AuthService } from '@/services/auth.service';
 
 export const useAuth = () => {
   const auth = useAuthStore();
@@ -8,12 +9,10 @@ export const useAuth = () => {
     async (email: string, password: string) => {
       auth.setLoading(true);
       try {
-        // API call would go here
-        // const response = await api.post('/auth/login', { email, password });
-        // auth.setAuth(response.data.user, response.data.token, response.data.refreshToken);
-        console.log('Login:', email);
+        const res = await AuthService.login({ email, password });
+        auth.setAuth(res.user, res.token, res.refreshToken);
+        return res;
       } catch (error) {
-        console.error('Login error:', error);
         throw error;
       } finally {
         auth.setLoading(false);
@@ -32,12 +31,10 @@ export const useAuth = () => {
     ) => {
       auth.setLoading(true);
       try {
-        // API call would go here
-        // const response = await api.post('/auth/register', { firstName, lastName, email, password, role });
-        // auth.setAuth(response.data.user, response.data.token, response.data.refreshToken);
-        console.log('Register:', { firstName, lastName, email, role });
+        const res = await AuthService.register({ firstName, lastName, email, password, role });
+        auth.setAuth(res.user, res.token, res.refreshToken);
+        return res;
       } catch (error) {
-        console.error('Register error:', error);
         throw error;
       } finally {
         auth.setLoading(false);
