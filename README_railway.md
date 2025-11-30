@@ -1,13 +1,41 @@
-# VTP Backend on Railway
+# VTP Backend on Railway - Quick Reference
 
-This guide configures the VTP backend to run on Railway with all recent features enabled: JWT auth, 2FA, password reset via SMTP, Redis sessions/caching, WebSocket signaling, and health checks.
+> **⚠️ IMPORTANT**: For complete setup instructions, troubleshooting, and detailed configuration, see [`RAILWAY_COMPLETE_SETUP.md`](./RAILWAY_COMPLETE_SETUP.md)
 
-## Services to Provision
-- PostgreSQL (Railway Postgres plugin)
-- Redis (Railway Redis plugin)
-- SMTP provider (e.g., SendGrid, Mailgun, or Gmail SMTP)
+This is a quick reference guide. The complete guide includes:
+- Step-by-step service setup with screenshots
+- Troubleshooting decision tree
+- Testing commands and expected outputs
+- Common error fixes
+- Full environment variable explanations
 
-## Environment Variables
+## Quick Start
+
+### 1. Add Required Services
+In Railway dashboard:
+1. **Add PostgreSQL**: Click "+ Create" → Database → PostgreSQL
+2. **Add Redis**: Click "+ Create" → Database → Redis
+
+### 2. Configure Backend Variables
+Click VTP service → Variables → Add these:
+
+```bash
+# Required Core
+APP_ENV=production
+PORT=8080
+JWT_SECRET=<generate-32-char-random-string>
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+REDIS_URL=${{Redis.REDIS_URL}}
+CORS_ORIGINS=<your-frontend-url>
+```
+
+### 3. Verify Deployment
+```bash
+curl https://<your-railway-url>/health
+# Should return: {"status":"healthy","database":true}
+```
+
+## Complete Environment Variables Reference
 Set these in Railway Project Settings → Variables:
 
 Authentication & App
