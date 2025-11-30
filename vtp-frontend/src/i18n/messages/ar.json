@@ -220,11 +220,11 @@
   "assignments.points": "نقاط",
   "assignments.feedback": "ملاحظات المعلم",
   "assignments.graded": "تم التقييم",
-  "assignments.loadError": "فشل تحميل البيانات"
-  "assignments.viewDetails": "عرض التفاصيل"
-  "assignments.pending": "بانتظار التقييم"
+  "assignments.loadError": "فشل تحميل البيانات",
+  "assignments.viewDetails": "عرض التفاصيل",
+  "assignments.pending": "بانتظار التقييم",
   "assignments.noSubmissions": "لا توجد تسليمات حتى الآن",
-  "common.loading": "جارٍ التحميل…"
+  "common.loading": "جارٍ التحميل…",
   "recordings.title": "التسجيلات",
   "recordings.details": "تفاصيل التسجيل",
   "recordings.empty": "لا توجد تسجيلات حالياً",

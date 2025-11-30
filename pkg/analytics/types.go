@@ -103,6 +103,7 @@ type CourseStatistics struct {
 	TotalLectures         int       `json:"total_lectures"`
 	TotalViewSessions     int       `json:"total_view_sessions"`
 	AvgAttendanceRate     float64   `json:"avg_attendance_rate"` // 0-100
+	AverageCompletion     float64   `json:"average_completion"`  // 0-100
 	TotalWatchTimeSeconds int64     `json:"total_watch_time_seconds"`
 	CourseEngagementScore int       `json:"course_engagement_score"` // 0-100
 	CreatedAt             time.Time `json:"created_at"`

@@ -97,7 +97,7 @@ function SubmissionRow({ submission, maxPoints, canGrade, onGraded }: { submissi
   return (
     <div className="flex flex-col md:flex-row md:items-center gap-3 bg-gray-700/50 rounded p-4">
       <div className="flex-1">
-        <div className="text-white text-sm">طالب: {submission.student_name ?? submission.student_id}</div>
+        <div className="text-white text-sm">طالب: {submission.student_id}</div>
         {submission.file_url && (
           <a href={submission.file_url} target="_blank" rel="noopener" className="text-blue-300 text-sm underline">رابط الملف</a>
         )}

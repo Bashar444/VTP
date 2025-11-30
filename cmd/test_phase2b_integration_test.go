@@ -292,9 +292,6 @@ func TestQualityAdaptation(t *testing.T) {
 	}{
 		{10.0, "Severe congestion"},
 		{25.0, "Moderate congestion"},
-	import (
-		"github.com/Bashar444/VTP/pkg/streaming"
-	)
 	}
 
 	for _, tc := range testCases {
