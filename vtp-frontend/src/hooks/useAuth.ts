@@ -10,7 +10,7 @@ export const useAuth = () => {
       auth.setLoading(true);
       try {
         const res = await AuthService.login({ email, password });
-        auth.setAuth(res.user, res.token, res.refreshToken);
+        auth.setAuth(res.user, res.access_token, res.refresh_token);
         return res;
       } catch (error) {
         throw error;
@@ -31,8 +31,13 @@ export const useAuth = () => {
     ) => {
       auth.setLoading(true);
       try {
-        const res = await AuthService.register({ firstName, lastName, email, password, role });
-        auth.setAuth(res.user, res.token, res.refreshToken);
+        const res = await AuthService.register({
+          full_name: `${firstName} ${lastName}`,
+          email,
+          password,
+          role,
+        });
+        auth.setAuth(res.user, res.access_token, res.refresh_token);
         return res;
       } catch (error) {
         throw error;

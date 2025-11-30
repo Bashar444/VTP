@@ -5,28 +5,30 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  token: string;
-  refreshToken: string;
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+  token_type: string;
   user: User;
 }
 
 export interface RegisterRequest {
-  firstName: string;
-  lastName: string;
+  full_name: string;
   email: string;
   password: string;
   role: 'student' | 'instructor' | 'admin';
+  phone?: string;
 }
 
 export interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
+  user_id: string;
   email: string;
+  full_name: string;
+  phone?: string;
   role: 'student' | 'instructor' | 'admin';
-  profilePictureUrl?: string;
-  createdAt: string;
-  updatedAt: string;
+  profile_picture_url?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Course {
