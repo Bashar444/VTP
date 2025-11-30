@@ -85,7 +85,7 @@ function SubmissionRow({ submission, maxPoints, canGrade, onGraded }: { submissi
     if (grade === '' || Number(grade) < 0 || Number(grade) > maxPoints) return;
     try {
       setSaving(true);
-      await AssignmentService.grade(submission.id, { grade: Number(grade), feedback_ar });
+      await AssignmentService.grade(submission.id, Number(grade), feedback_ar);
       onGraded();
     } catch (e) {
       // silent error UI minimal; could expand
