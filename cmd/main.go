@@ -128,11 +128,16 @@ func main() {
 	var userStore *auth.UserStore
 	var authHandler *auth.AuthHandler
 	var authMiddleware *auth.AuthMiddleware
+	var twoFactorHandler *auth.TwoFactorHandler
 
 	if database != nil {
 		userStore = auth.NewUserStore(database.Conn(), passwordService)
 		authHandler = auth.NewAuthHandler(userStore, tokenService, passwordService)
 		authMiddleware = auth.NewAuthMiddleware(tokenService)
+
+		// Initialize 2FA service
+		twoFactorService := auth.NewTwoFactorService(database.Conn(), "VTP Platform")
+		twoFactorHandler = auth.NewTwoFactorHandler(twoFactorService)
 	} else {
 		// Create dummy handlers when no database
 		authHandler = auth.NewAuthHandler(nil, tokenService, passwordService)
@@ -143,6 +148,7 @@ func main() {
 	log.Println("      ✓ Password service (bcrypt cost: 12)")
 	if database != nil {
 		log.Println("      ✓ User store")
+		log.Println("      ✓ 2FA service (TOTP)")
 	}
 	log.Println("      ✓ Auth handlers")
 	log.Println("      ✓ Auth middleware")
@@ -330,6 +336,37 @@ func main() {
 		authMiddleware.Middleware(
 			http.HandlerFunc(authHandler.ChangePasswordHandler)))
 	log.Println("      ✓ POST /api/v1/auth/change-password (protected)")
+
+	// 2FA endpoints (protected)
+	if twoFactorHandler != nil {
+		http.Handle("/api/v1/auth/2fa/setup",
+			authMiddleware.Middleware(
+				http.HandlerFunc(twoFactorHandler.Setup2FA)))
+		log.Println("      ✓ POST /api/v1/auth/2fa/setup (protected)")
+
+		http.Handle("/api/v1/auth/2fa/enable",
+			authMiddleware.Middleware(
+				http.HandlerFunc(twoFactorHandler.Enable2FA)))
+		log.Println("      ✓ POST /api/v1/auth/2fa/enable (protected)")
+
+		http.HandleFunc("/api/v1/auth/2fa/verify", twoFactorHandler.Verify2FA)
+		log.Println("      ✓ POST /api/v1/auth/2fa/verify")
+
+		http.Handle("/api/v1/auth/2fa/disable",
+			authMiddleware.Middleware(
+				http.HandlerFunc(twoFactorHandler.Disable2FA)))
+		log.Println("      ✓ POST /api/v1/auth/2fa/disable (protected)")
+
+		http.Handle("/api/v1/auth/2fa/backup-codes",
+			authMiddleware.Middleware(
+				http.HandlerFunc(twoFactorHandler.GetBackupCodes)))
+		log.Println("      ✓ GET /api/v1/auth/2fa/backup-codes (protected)")
+
+		http.Handle("/api/v1/auth/2fa/backup-codes/regenerate",
+			authMiddleware.Middleware(
+				http.HandlerFunc(twoFactorHandler.RegenerateBackupCodes)))
+		log.Println("      ✓ POST /api/v1/auth/2fa/backup-codes/regenerate (protected)")
+	}
 
 	// Signalling endpoints (WebRTC)
 	http.Handle("/socket.io/", sigServer)

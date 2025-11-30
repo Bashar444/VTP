@@ -4,15 +4,20 @@ import "time"
 
 // User represents a platform user (student, teacher, admin)
 type User struct {
-	ID           string    `db:"id" json:"id"`
-	Email        string    `db:"email" json:"email"`
-	Phone        string    `db:"phone" json:"phone"`
-	FullName     string    `db:"full_name" json:"full_name"`
-	Role         string    `db:"role" json:"role"` // student, teacher, admin
-	PasswordHash string    `db:"password_hash" json:"-"`
-	Locale       string    `db:"locale" json:"locale"` // ar_SY
-	CreatedAt    time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt    time.Time `db:"updated_at" json:"updated_at"`
+	ID               string     `db:"id" json:"id"`
+	Email            string     `db:"email" json:"email"`
+	Phone            string     `db:"phone" json:"phone"`
+	FullName         string     `db:"full_name" json:"full_name"`
+	Role             string     `db:"role" json:"role"` // student, teacher, admin
+	PasswordHash     string     `db:"password_hash" json:"-"`
+	Locale           string     `db:"locale" json:"locale"` // ar_SY
+	TOTPSecret       string     `db:"totp_secret" json:"-"`
+	TOTPEnabled      bool       `db:"totp_enabled" json:"totp_enabled"`
+	TOTPVerifiedAt   *time.Time `db:"totp_verified_at" json:"totp_verified_at,omitempty"`
+	BackupCodes      string     `db:"backup_codes" json:"-"` // JSON array
+	LastTOTPVerified *time.Time `db:"last_totp_verified" json:"-"`
+	CreatedAt        time.Time  `db:"created_at" json:"created_at"`
+	UpdatedAt        time.Time  `db:"updated_at" json:"updated_at"`
 }
 
 // Course represents an educational course
