@@ -1,4 +1,4 @@
-import api from '@/services/api.client';
+import { api } from '@/services/api.client';
 
 export interface RecordingDTO {
   id: string;
