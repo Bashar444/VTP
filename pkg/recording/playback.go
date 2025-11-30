@@ -430,22 +430,12 @@ func (h *PlaybackHandlers) PlaybackAnalyticsHandler(w http.ResponseWriter, r *ht
 
 // RegisterPlaybackRoutes registers all playback-related routes
 func (h *PlaybackHandlers) RegisterPlaybackRoutes(mux *http.ServeMux) {
-	// Streaming endpoints
-	mux.HandleFunc("/api/v1/recordings/", func(w http.ResponseWriter, r *http.Request) {
-		if strings.Contains(r.URL.Path, "/stream/playlist.m3u8") {
-			h.StreamHLSPlaylistHandler(w, r)
-		} else if strings.Contains(r.URL.Path, "/stream/") && strings.HasSuffix(r.URL.Path, ".ts") {
-			h.StreamHLSSegmentHandler(w, r)
-		} else if strings.HasSuffix(r.URL.Path, "/info") {
-			h.GetRecordingInfoHandler(w, r)
-		} else if strings.HasSuffix(r.URL.Path, "/thumbnail") {
-			h.GetRecordingThumbnailHandler(w, r)
-		} else if strings.HasSuffix(r.URL.Path, "/transcode") {
-			h.TranscodeRecordingHandler(w, r)
-		} else if strings.HasSuffix(r.URL.Path, "/progress") {
-			h.PlaybackProgressHandler(w, r)
-		} else if strings.HasSuffix(r.URL.Path, "/analytics") {
-			h.PlaybackAnalyticsHandler(w, r)
-		}
-	})
+	// Streaming endpoints - use specific patterns to avoid conflicts
+	mux.HandleFunc("/api/v1/recordings/{id}/stream/playlist.m3u8", h.StreamHLSPlaylistHandler)
+	mux.HandleFunc("/api/v1/recordings/{id}/stream/", h.StreamHLSSegmentHandler)
+	mux.HandleFunc("/api/v1/recordings/{id}/info", h.GetRecordingInfoHandler)
+	mux.HandleFunc("/api/v1/recordings/{id}/thumbnail", h.GetRecordingThumbnailHandler)
+	mux.HandleFunc("/api/v1/recordings/{id}/transcode", h.TranscodeRecordingHandler)
+	mux.HandleFunc("/api/v1/recordings/{id}/progress", h.PlaybackProgressHandler)
+	mux.HandleFunc("/api/v1/recordings/{id}/analytics", h.PlaybackAnalyticsHandler)
 }
