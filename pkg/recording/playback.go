@@ -433,7 +433,6 @@ func (h *PlaybackHandlers) RegisterPlaybackRoutes(mux *http.ServeMux) {
 	// Streaming endpoints - use specific patterns to avoid conflicts
 	mux.HandleFunc("/api/v1/recordings/{id}/stream/playlist.m3u8", h.StreamHLSPlaylistHandler)
 	mux.HandleFunc("/api/v1/recordings/{id}/stream/", h.StreamHLSSegmentHandler)
-	mux.HandleFunc("/api/v1/recordings/{id}/info", h.GetRecordingInfoHandler)
 	mux.HandleFunc("/api/v1/recordings/{id}/thumbnail", h.GetRecordingThumbnailHandler)
 	mux.HandleFunc("/api/v1/recordings/{id}/transcode", h.TranscodeRecordingHandler)
 	mux.HandleFunc("/api/v1/recordings/{id}/progress", h.PlaybackProgressHandler)
