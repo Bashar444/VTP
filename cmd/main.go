@@ -129,6 +129,7 @@ func main() {
 	var authHandler *auth.AuthHandler
 	var authMiddleware *auth.AuthMiddleware
 	var twoFactorHandler *auth.TwoFactorHandler
+	var passwordResetHandler *auth.PasswordResetHandler
 
 	if database != nil {
 		userStore = auth.NewUserStore(database.Conn(), passwordService)
@@ -138,6 +139,10 @@ func main() {
 		// Initialize 2FA service
 		twoFactorService := auth.NewTwoFactorService(database.Conn(), "VTP Platform")
 		twoFactorHandler = auth.NewTwoFactorHandler(twoFactorService)
+
+		// Initialize password reset service (24 hour token expiry)
+		passwordResetService := auth.NewPasswordResetService(database.Conn(), passwordService, 24)
+		passwordResetHandler = auth.NewPasswordResetHandler(passwordResetService)
 	} else {
 		// Create dummy handlers when no database
 		authHandler = auth.NewAuthHandler(nil, tokenService, passwordService)
@@ -149,11 +154,10 @@ func main() {
 	if database != nil {
 		log.Println("      ✓ User store")
 		log.Println("      ✓ 2FA service (TOTP)")
+		log.Println("      ✓ Password reset service (24h expiry)")
 	}
 	log.Println("      ✓ Auth handlers")
-	log.Println("      ✓ Auth middleware")
-
-	// 3b. Initialize Signalling Server (Phase 1b)
+	log.Println("      ✓ Auth middleware") // 3b. Initialize Signalling Server (Phase 1b)
 	log.Println("\n[3b/5] Initializing WebRTC signalling server...")
 	sigServer, err := signalling.NewSignallingServer()
 	if err != nil {
@@ -325,6 +329,18 @@ func main() {
 
 	http.HandleFunc("/api/v1/auth/refresh", authHandler.RefreshHandler)
 	log.Println("      ✓ POST /api/v1/auth/refresh")
+
+	// Password reset endpoints (public)
+	if passwordResetHandler != nil {
+		http.HandleFunc("/api/v1/auth/forgot-password", passwordResetHandler.RequestPasswordReset)
+		log.Println("      ✓ POST /api/v1/auth/forgot-password")
+
+		http.HandleFunc("/api/v1/auth/verify-reset-token", passwordResetHandler.VerifyResetToken)
+		log.Println("      ✓ POST /api/v1/auth/verify-reset-token")
+
+		http.HandleFunc("/api/v1/auth/reset-password", passwordResetHandler.ResetPassword)
+		log.Println("      ✓ POST /api/v1/auth/reset-password")
+	}
 
 	// Protected endpoints (require authentication)
 	http.Handle("/api/v1/auth/profile",
