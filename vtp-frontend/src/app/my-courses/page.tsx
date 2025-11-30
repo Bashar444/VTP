@@ -8,6 +8,7 @@ import { CourseService } from '@/services/course.service';
 import { CourseCard } from '@/components/courses/CourseCard';
 import type { Course } from '@/services/course.service';
 import { Play, BookOpen, CheckCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface EnrolledCourse extends Course {
   progress?: number;
@@ -17,6 +18,7 @@ interface EnrolledCourse extends Course {
 export default function MyCoursesPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const t = useTranslations();
   const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
   const [completedCourses, setCompletedCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,7 +67,7 @@ export default function MyCoursesPage() {
     return (
       <div className="min-h-screen bg-gray-900 pt-24 pb-12">
         <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-bold text-white mb-8">My Courses</h1>
+          <h1 className="text-4xl font-bold text-white mb-8">{t('myCourses.title')}</h1>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="bg-gray-800 rounded-lg animate-pulse h-80" />
@@ -81,9 +83,9 @@ export default function MyCoursesPage() {
       <div className="container mx-auto px-4">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">My Courses</h1>
+          <h1 className="text-4xl font-bold text-white mb-2">{t('myCourses.title')}</h1>
           <p className="text-gray-400">
-            {enrolledCourses.length + completedCourses.length} courses total
+            {enrolledCourses.length + completedCourses.length} {t('myCourses.coursesTotal')}
           </p>
         </div>
 
@@ -106,7 +108,7 @@ export default function MyCoursesPage() {
             >
               <div className="flex items-center gap-2">
                 <Play className="w-5 h-5" />
-                In Progress ({enrolledCourses.length})
+                {t('myCourses.tabs.inProgress')} ({enrolledCourses.length})
               </div>
             </button>
             <button
@@ -119,7 +121,7 @@ export default function MyCoursesPage() {
             >
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-5 h-5" />
-                Completed ({completedCourses.length})
+                {t('myCourses.tabs.completed')} ({completedCourses.length})
               </div>
             </button>
           </div>
@@ -164,7 +166,7 @@ export default function MyCoursesPage() {
                       {/* Progress Bar */}
                       <div className="mb-4">
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm text-gray-400">Progress</span>
+                          <span className="text-sm text-gray-400">{t('myCourses.progress')}</span>
                           <span className="text-sm font-semibold text-blue-400">
                             {Math.round(course.progress || 0)}%
                           </span>
@@ -180,13 +182,13 @@ export default function MyCoursesPage() {
                       {/* Footer */}
                       <div className="flex items-center justify-between pt-4 border-t border-gray-700">
                         <span className="text-sm text-gray-400">
-                          {course.lastWatchedDate ? `Last watched: ${course.lastWatchedDate}` : 'Not started'}
+                          {course.lastWatchedDate ? `${t('myCourses.lastWatched')}: ${course.lastWatchedDate}` : t('myCourses.notStarted')}
                         </span>
                         <button
                           onClick={() => handleContinueWatching(course.id)}
                           className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded transition-colors"
                         >
-                          Continue
+                          {t('myCourses.continue')}
                         </button>
                       </div>
                     </div>
@@ -196,7 +198,7 @@ export default function MyCoursesPage() {
             ) : (
               <div className="text-center py-16">
                 <BookOpen className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-300 mb-2">No courses yet</h3>
+                <h3 className="text-xl font-semibold text-gray-300 mb-2">{t('myCourses.empty.title')}</h3>
                 <p className="text-gray-400 mb-6">{t('myCourses.empty.start')}</p>
                 <button
                   onClick={() => router.push('/courses')}
@@ -266,7 +268,7 @@ export default function MyCoursesPage() {
                   onClick={() => router.push('/courses')}
                   className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors"
                 >
-                  Browse Courses
+                  {t('myCourses.completed.browseCourses')}
                 </button>
               </div>
             )}
