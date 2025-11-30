@@ -9,18 +9,18 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/Bashar444/VTP/pkg/assignment"
+	"github.com/Bashar444/VTP/pkg/auth"
+	"github.com/Bashar444/VTP/pkg/course"
+	"github.com/Bashar444/VTP/pkg/db"
+	"github.com/Bashar444/VTP/pkg/instructor"
+	"github.com/Bashar444/VTP/pkg/material"
+	"github.com/Bashar444/VTP/pkg/meeting"
+	"github.com/Bashar444/VTP/pkg/recording"
+	"github.com/Bashar444/VTP/pkg/signalling"
+	"github.com/Bashar444/VTP/pkg/streaming"
+	"github.com/Bashar444/VTP/pkg/subject"
 	"github.com/joho/godotenv"
-	"github.com/yourusername/vtp-platform/pkg/auth"
-	"github.com/yourusername/vtp-platform/pkg/course"
-	"github.com/yourusername/vtp-platform/pkg/db"
-	"github.com/yourusername/vtp-platform/pkg/instructor"
-	"github.com/yourusername/vtp-platform/pkg/assignment"
-	"github.com/yourusername/vtp-platform/pkg/material"
-	"github.com/yourusername/vtp-platform/pkg/meeting"
-	"github.com/yourusername/vtp-platform/pkg/recording"
-	"github.com/yourusername/vtp-platform/pkg/signalling"
-	"github.com/yourusername/vtp-platform/pkg/streaming"
-	"github.com/yourusername/vtp-platform/pkg/subject"
 )
 
 func getStorageDir() string {
@@ -128,7 +128,7 @@ func main() {
 	var userStore *auth.UserStore
 	var authHandler *auth.AuthHandler
 	var authMiddleware *auth.AuthMiddleware
-	
+
 	if database != nil {
 		userStore = auth.NewUserStore(database.Conn(), passwordService)
 		authHandler = auth.NewAuthHandler(userStore, tokenService, passwordService)
@@ -166,7 +166,7 @@ func main() {
 	var recordingHandlers *recording.RecordingHandlers
 	var storageHandlers *recording.StorageHandlers
 	var playbackHandlers *recording.PlaybackHandlers
-	
+
 	if database != nil {
 		log.Println("\n[3c/5] Initializing recording service...")
 		recordingService := recording.NewRecordingService(database.Conn(), log.New(os.Stderr, "[Recording] ", log.LstdFlags))
@@ -197,7 +197,7 @@ func main() {
 
 	// 3d. Initialize Course Service (Phase 3) - only if database available
 	var courseHandlers *course.CourseHandlers
-	
+
 	if database != nil {
 		log.Println("\n[3d/5] Initializing course management service...")
 		courseService := course.NewCourseService(database.Conn(), log.New(os.Stderr, "[CourseService] ", log.LstdFlags))
@@ -215,7 +215,7 @@ func main() {
 	var meetingHandlers *meeting.Handler
 	var materialHandlers *material.Handler
 	var assignmentHandlers *assignment.Handler
-	
+
 	if database != nil {
 		log.Println("\n[3d2/7] Initializing instructor management service...")
 		instructorRepo := instructor.NewRepository(database.Conn())
@@ -356,6 +356,42 @@ func main() {
 		log.Println("      ✓ POST /api/v1/recordings/start")
 		log.Println("      ✓ POST /api/v1/recordings/{id}/stop")
 		log.Println("      ✓ GET /api/v1/recordings")
+		log.Println("      ✓ GET /api/v1/recordings/{id}")
+		log.Println("      ✓ DELETE /api/v1/recordings/{id}")
+
+		// Metadata CRUD endpoints (unified under /api/v1/recordings)
+		metaRepo := recording.Repository{DB: database.Conn()}
+		metaService := recording.Service{Repo: &metaRepo}
+		metaHandler := recording.Handler{Service: &metaService}
+
+		http.HandleFunc("/api/v1/recordings", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			if r.Method == http.MethodGet {
+				metaHandler.List(w, r)
+				return
+			}
+			if r.Method == http.MethodPost {
+				metaHandler.Create(w, r)
+				return
+			}
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		})
+		log.Println("      ✓ GET /api/v1/recordings")
+		log.Println("      ✓ POST /api/v1/recordings")
+
+		http.HandleFunc("/api/v1/recordings/", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			// Expect /api/v1/recordings/{id}
+			if r.Method == http.MethodGet {
+				metaHandler.Get(w, r)
+				return
+			}
+			if r.Method == http.MethodDelete {
+				metaHandler.Delete(w, r)
+				return
+			}
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		})
 		log.Println("      ✓ GET /api/v1/recordings/{id}")
 		log.Println("      ✓ DELETE /api/v1/recordings/{id}")
 	}

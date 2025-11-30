@@ -62,29 +62,6 @@ type Recording struct {
 	CreatedAt    time.Time `db:"created_at" json:"created_at"`
 }
 
-// Assignment represents a course assignment
-type Assignment struct {
-	ID            string    `db:"id" json:"id"`
-	LessonID      string    `db:"lesson_id" json:"lesson_id"`
-	TitleAr       string    `db:"title_ar" json:"title_ar"`
-	DescriptionAr string    `db:"description_ar" json:"description_ar"`
-	DueDate       time.Time `db:"due_date" json:"due_date"`
-	CreatedAt     time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt     time.Time `db:"updated_at" json:"updated_at"`
-}
-
-// Submission represents a student's assignment submission
-type Submission struct {
-	ID           string    `db:"id" json:"id"`
-	AssignmentID string    `db:"assignment_id" json:"assignment_id"`
-	StudentID    string    `db:"student_id" json:"student_id"`
-	FileRefs     string    `db:"file_refs" json:"file_refs"` // JSON array
-	Grade        *float32  `db:"grade" json:"grade"`
-	Feedback     string    `db:"feedback" json:"feedback"`
-	CreatedAt    time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt    time.Time `db:"updated_at" json:"updated_at"`
-}
-
 // Chat represents a message in a class chat
 type Chat struct {
 	ID        string    `db:"id" json:"id"`
@@ -152,6 +129,20 @@ type StudyMaterial struct {
 	Downloads    int       `db:"downloads" json:"downloads"`
 	CreatedAt    time.Time `db:"created_at" json:"created_at"`
 	UpdatedAt    time.Time `db:"updated_at" json:"updated_at"`
+}
+
+// RecordingMeta represents denormalized recording metadata used by the REST API
+type RecordingMeta struct {
+	ID              string    `json:"id"`
+	CourseID        *string   `json:"course_id"`
+	InstructorID    string    `json:"instructor_id"`
+	TitleAr         string    `json:"title_ar"`
+	DescriptionAr   *string   `json:"description_ar"`
+	SubjectID       *string   `json:"subject_id"`
+	FileURL         string    `json:"file_url"`
+	DurationSeconds int       `json:"duration_seconds"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
 }
 
 type Assignment struct {

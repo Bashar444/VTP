@@ -7,8 +7,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/yourusername/vtp-platform/pkg/auth"
-	"github.com/yourusername/vtp-platform/pkg/g5"
+	"github.com/Bashar444/VTP/pkg/auth"
+	"github.com/Bashar444/VTP/pkg/g5"
 )
 
 // APIHandler provides HTTP endpoints for signalling management

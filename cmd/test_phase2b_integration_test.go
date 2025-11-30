@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yourusername/vtp-platform/pkg/streaming"
+	"github.com/Bashar444/VTP/pkg/streaming"
 )
 
 // TestPhase2BFullIntegration tests the complete Phase 2B streaming pipeline
@@ -292,9 +292,9 @@ func TestQualityAdaptation(t *testing.T) {
 	}{
 		{10.0, "Severe congestion"},
 		{25.0, "Moderate congestion"},
-		{50.0, "Normal conditions"},
-		{75.0, "Good conditions"},
-		{90.0, "Excellent conditions"},
+	import (
+		"github.com/Bashar444/VTP/pkg/streaming"
+	)
 	}
 
 	for _, tc := range testCases {

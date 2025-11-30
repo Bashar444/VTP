@@ -124,6 +124,52 @@ export interface StudyMaterial {
   updated_at: string;
 }
 
+// Assignments domain types
+export interface Assignment {
+  id: string;
+  course_id?: string;
+  instructor_id: string;
+  title_ar: string;
+  description_ar?: string;
+  subject_id?: string;
+  due_at: string;
+  max_points: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateAssignmentDTO {
+  course_id?: string;
+  instructor_id: string;
+  title_ar: string;
+  description_ar?: string;
+  subject_id?: string;
+  due_at: string;
+  max_points?: number;
+}
+
+export interface AssignmentSubmission {
+  id: string;
+  assignment_id: string;
+  student_id: string;
+  submitted_at: string;
+  file_url?: string;
+  notes?: string;
+  grade?: number;
+  graded_at?: string;
+  feedback_ar?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateSubmissionDTO {
+  assignment_id: string;
+  student_id: string;
+  file_url?: string;
+  notes?: string;
+}
+
+
 export interface CreateMaterialDTO {
   course_id?: string;
   instructor_id: string;

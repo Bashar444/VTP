@@ -14,6 +14,10 @@ import type {
   CreateMaterialDTO,
   UpdateMaterialDTO,
   MaterialFilters,
+  Assignment,
+  CreateAssignmentDTO,
+  AssignmentSubmission,
+  CreateSubmissionDTO,
 } from '@/types/domains';
 
 // Instructor Service
@@ -184,5 +188,43 @@ export class MaterialService {
 
   static getDownloadUrl(id: string) {
     return `${this.baseUrl}/${id}/download`;
+  }
+}
+
+// Assignment Service
+export class AssignmentService {
+  private static baseUrl = '/api/v1/assignments';
+
+  static async getAssignments(params?: { instructor_id?: string; subject_id?: string }): Promise<Assignment[]> {
+    const q = new URLSearchParams();
+    if (params?.instructor_id) q.append('instructor_id', params.instructor_id);
+    if (params?.subject_id) q.append('subject_id', params.subject_id);
+    const res = await apiClient.get<{ assignments: Assignment[] }>(`${this.baseUrl}?${q.toString()}`);
+    return res.data.assignments;
+  }
+
+  static async createAssignment(data: CreateAssignmentDTO): Promise<Assignment> {
+    const res = await apiClient.post<Assignment>(this.baseUrl, data);
+    return res.data;
+  }
+
+  static async getAssignment(id: string): Promise<Assignment> {
+    const res = await apiClient.get<Assignment>(`${this.baseUrl}/${id}`);
+    return res.data;
+  }
+
+  static async submit(sub: CreateSubmissionDTO): Promise<AssignmentSubmission> {
+    const res = await apiClient.post<AssignmentSubmission>(`${this.baseUrl}/${sub.assignment_id}/submit`, sub);
+    return res.data;
+  }
+
+  static async listSubmissions(assignmentId: string): Promise<AssignmentSubmission[]> {
+    const res = await apiClient.get<{ submissions: AssignmentSubmission[] }>(`${this.baseUrl}/${assignmentId}/submissions`);
+    return res.data.submissions;
+  }
+
+  static async grade(submissionId: string, grade: number, feedback_ar?: string): Promise<AssignmentSubmission> {
+    const res = await apiClient.post<AssignmentSubmission>(`${this.baseUrl}/submissions/${submissionId}/grade`, { grade, feedback_ar });
+    return res.data;
   }
 }

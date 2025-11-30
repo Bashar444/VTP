@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Bashar444/VTP/pkg/auth"
 	"github.com/google/uuid"
-	"github.com/yourusername/vtp-platform/pkg/auth"
 )
 
 // APIHandler provides HTTP endpoints for analytics
@@ -310,8 +310,8 @@ func (h *APIHandler) GetPerformanceReportHandler(w http.ResponseWriter, r *http.
 		TopLectures: []LecturePerformance{
 			{
 				LectureNumber:     1,
-				Title:              "Introduction to Course",
-				RecordingID:        uuid.New(),
+				Title:             "Introduction to Course",
+				RecordingID:       uuid.New(),
 				AvgCompletionRate: 92.0,
 				EngagementScore:   85,
 				ViewCount:         120,
@@ -319,8 +319,8 @@ func (h *APIHandler) GetPerformanceReportHandler(w http.ResponseWriter, r *http.
 			},
 			{
 				LectureNumber:     2,
-				Title:              "Core Concepts",
-				RecordingID:        uuid.New(),
+				Title:             "Core Concepts",
+				RecordingID:       uuid.New(),
 				AvgCompletionRate: 88.0,
 				EngagementScore:   82,
 				ViewCount:         118,
@@ -330,8 +330,8 @@ func (h *APIHandler) GetPerformanceReportHandler(w http.ResponseWriter, r *http.
 		StruggleLectures: []LecturePerformance{
 			{
 				LectureNumber:     5,
-				Title:              "Advanced Topics",
-				RecordingID:        uuid.New(),
+				Title:             "Advanced Topics",
+				RecordingID:       uuid.New(),
 				AvgCompletionRate: 52.0,
 				EngagementScore:   45,
 				ViewCount:         110,

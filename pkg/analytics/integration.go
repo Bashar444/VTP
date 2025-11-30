@@ -95,7 +95,7 @@ func (l *StreamingEventListener) OnPlaybackStopped(sessionID string, watchedSeco
 	}
 
 	// Store metrics
-	if err := l.store.StoreEngagementMetrics(metrics); err != nil {
+	if err := l.store.StoreEngagementMetrics(*metrics); err != nil {
 		l.logger.Printf("Failed to store metrics: %v", err)
 		return err
 	}
@@ -420,8 +420,7 @@ func NewAnalyticsService(
 	collector := NewEventCollector(100, 5*time.Second, logger)
 	store := NewPostgresAnalyticsStore(db, logger)
 	calculator := NewMetricsCalculator(store, logger)
-	scorer := NewEngagementScorer(calculator, logger)
-	aggregator := NewAggregationService(store, logger)
+	// scorer and aggregator can be initialized when needed; omitted to avoid unused vars
 	alertGen := NewAlertGenerator(DefaultPerformanceThreshold(), logger)
 
 	// Create listener
@@ -500,7 +499,7 @@ func (as *AnalyticsService) Stop() error {
 }
 
 // GetEventCollector returns the event collector
-func (as *AnalyticsService) GetEventCollector() *EventCollector {
+func (as *AnalyticsService) GetEventCollector() *EventCollectorImpl {
 	return as.collector
 }
 

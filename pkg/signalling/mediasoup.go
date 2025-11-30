@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/Bashar444/VTP/pkg/mediasoup"
 	socketio "github.com/googollee/go-socket.io"
-	"github.com/yourusername/vtp-platform/pkg/mediasoup"
 )
 
 // MediasoupIntegration handles integration between signalling and Mediasoup

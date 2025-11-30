@@ -51,6 +51,7 @@ export function NavBar() {
             <Link href="/courses" className="hover:text-indigo-600">{t('nav.courses')}</Link>
                         <Link href="/instructors" className="hover:text-indigo-600">{t('nav.instructors')}</Link>
             <Link href="/materials" className="hover:text-indigo-600">{t('nav.materials')}</Link>
+            <Link href="/assignments" className="hover:text-indigo-600">{t('assignments.title')}</Link>
             <Link href="/my-courses" className="hover:text-indigo-600">{t('nav.myCourses')}</Link>
             <Link href="/dashboard" className="hover:text-indigo-600">{t('nav.dashboard')}</Link>
             <Link href="/stream/demo" className="hover:text-indigo-600">{t('nav.stream')}</Link>
