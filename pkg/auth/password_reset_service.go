@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 )
 
@@ -20,6 +21,9 @@ type PasswordResetService struct {
 	db              *sql.DB
 	passwordService *PasswordService
 	tokenExpiry     time.Duration
+	emailSender     interface {
+		Send(to, subject, bodyHTML, bodyText string) error
+	}
 }
 
 // NewPasswordResetService creates a new password reset service
@@ -29,6 +33,14 @@ func NewPasswordResetService(db *sql.DB, passwordService *PasswordService, token
 		passwordService: passwordService,
 		tokenExpiry:     time.Duration(tokenExpiryHours) * time.Hour,
 	}
+}
+
+// WithEmailSender attaches an email sender to the service
+func (s *PasswordResetService) WithEmailSender(sender interface {
+	Send(to, subject, bodyHTML, bodyText string) error
+}) *PasswordResetService {
+	s.emailSender = sender
+	return s
 }
 
 // PasswordResetToken represents a password reset token
@@ -71,6 +83,19 @@ func (s *PasswordResetService) RequestPasswordReset(ctx context.Context, email, 
 	)
 	if err != nil {
 		return "", fmt.Errorf("failed to store reset token: %w", err)
+	}
+
+	// Send email if sender configured
+	if s.emailSender != nil {
+		resetBase := os.Getenv("RESET_BASE_URL")
+		if resetBase == "" {
+			resetBase = "https://example.com/reset-password"
+		}
+		link := fmt.Sprintf("%s?token=%s", resetBase, token)
+		subject := "Reset your VTP account password"
+		bodyText := fmt.Sprintf("We received a request to reset your password.\n\nUse this link: %s\n\nThe link expires in %d hours. If you did not request this, you can ignore this email.", link, int(s.tokenExpiry.Hours()))
+		bodyHTML := fmt.Sprintf("<p>We received a request to reset your password.</p><p><a href=\"%s\">Click here to reset</a></p><p>This link expires in %d hours. If you did not request this, you can ignore this email.</p>", link, int(s.tokenExpiry.Hours()))
+		_ = s.emailSender.Send(email, subject, bodyHTML, bodyText)
 	}
 
 	return token, nil

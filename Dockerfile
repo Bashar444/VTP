@@ -19,12 +19,18 @@ COPY . .
 RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/main.go
 
 # Runtime stage
-FROM alpine:latest
+FROM alpine:3.19
 
 WORKDIR /app
 
 # Install runtime dependencies
-RUN apk --no-cache add ca-certificates ffmpeg curl
+RUN apk --no-cache add ca-certificates ffmpeg curl tzdata
+
+# Set timezone (optional)
+ENV TZ=UTC
+
+# Create non-root user
+RUN addgroup -S app && adduser -S app -G app
 
 # Copy binary from builder
 COPY --from=builder /app/main .
@@ -38,5 +44,10 @@ COPY migrations ./migrations
 # Expose port
 EXPOSE 8080
 
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+	CMD wget --spider -q http://localhost:8080/health || exit 1
+
 # Run the application
+USER app
 CMD ["./main"]

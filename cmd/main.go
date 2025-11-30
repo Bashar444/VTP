@@ -14,6 +14,7 @@ import (
 	"github.com/Bashar444/VTP/pkg/auth"
 	"github.com/Bashar444/VTP/pkg/course"
 	"github.com/Bashar444/VTP/pkg/db"
+	"github.com/Bashar444/VTP/pkg/email"
 	"github.com/Bashar444/VTP/pkg/instructor"
 	"github.com/Bashar444/VTP/pkg/material"
 	"github.com/Bashar444/VTP/pkg/meeting"
@@ -143,6 +144,13 @@ func main() {
 
 		// Initialize password reset service (24 hour token expiry)
 		passwordResetService := auth.NewPasswordResetService(database.Conn(), passwordService, 24)
+		// Attach SMTP sender if env configured
+		if sender, err := email.NewSMTPSenderFromEnv(); err == nil {
+			passwordResetService = passwordResetService.WithEmailSender(sender)
+			log.Println("      ✓ SMTP email sender attached for password reset")
+		} else {
+			log.Println("      ⚠ SMTP not configured; password reset links will not be emailed")
+		}
 		passwordResetHandler = auth.NewPasswordResetHandler(passwordResetService)
 	} else {
 		// Create dummy handlers when no database
