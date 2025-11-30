@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vtp-config
+  namespace: vtp
+data:
+  # CORS origins (comma-separated)
+  cors-origins: "https://vtp-platform.example.com,https://www.vtp-platform.example.com"
+  
+  # Application settings
+  app-name: "VTP Platform"
+  app-version: "1.0.0"
+  
+  # JWT settings
+  jwt-expiry-hours: "24"
+  jwt-refresh-expiry-hours: "168"
+  
+  # Database settings
+  db-max-connections: "25"
+  db-max-idle-connections: "5"
+  
+  # Redis settings
+  redis-pool-size: "10"
+  redis-max-memory: "256mb"
+  redis-max-memory-policy: "allkeys-lru"
+  
+  # Recording settings
+  recordings-dir: "/recordings"
+  
+  # FFmpeg settings
+  ffmpeg-path: "/usr/bin/ffmpeg"
+  
+  # Logging
+  log-level: "info"
+  log-format: "json"

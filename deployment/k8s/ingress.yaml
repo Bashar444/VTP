@@ -1,0 +1,105 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vtp-ingress
+  namespace: vtp
+  annotations:
+    # Ingress class
+    kubernetes.io/ingress.class: "nginx"
+    
+    # SSL/TLS configuration
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    
+    # WebSocket support
+    nginx.ingress.kubernetes.io/websocket-services: "vtp-backend"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    
+    # CORS configuration
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    
+    # Rate limiting
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    nginx.ingress.kubernetes.io/limit-connections: "50"
+    
+    # Request size limits
+    nginx.ingress.kubernetes.io/proxy-body-size: "500m"
+    
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Frame-Options: SAMEORIGIN";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+      more_set_headers "Strict-Transport-Security: max-age=31536000; includeSubDomains";
+    
+    # Load balancing
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$remote_addr"  # IP hash for sticky sessions
+    # Or use: nginx.ingress.kubernetes.io/affinity: "cookie"
+spec:
+  tls:
+  - hosts:
+    - vtp-platform.example.com
+    secretName: vtp-tls
+  
+  rules:
+  - host: vtp-platform.example.com
+    http:
+      paths:
+      # Health check endpoint
+      - path: /health
+        pathType: Prefix
+        backend:
+          service:
+            name: vtp-backend
+            port:
+              number: 8080
+      
+      # API endpoints
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: vtp-backend
+            port:
+              number: 8080
+      
+      # WebSocket/Socket.IO endpoints
+      - path: /socket.io
+        pathType: Prefix
+        backend:
+          service:
+            name: vtp-backend
+            port:
+              number: 8080
+      
+      # Default backend
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: vtp-backend
+            port:
+              number: 8080
+---
+# Rate limiting configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-ingress-rate-limiting
+  namespace: vtp
+data:
+  # Login endpoint rate limit
+  login-rate-limit: "5r/m"
+  login-burst: "3"
+  
+  # API endpoint rate limit
+  api-rate-limit: "100r/m"
+  api-burst: "20"
+  
+  # Upload endpoint rate limit
+  upload-rate-limit: "10r/m"
+  upload-burst: "2"

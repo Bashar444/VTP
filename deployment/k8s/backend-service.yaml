@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vtp-backend
+  namespace: vtp
+  labels:
+    app: vtp-backend
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+spec:
+  type: ClusterIP  # Internal service (accessed via Ingress)
+  selector:
+    app: vtp-backend
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
+    protocol: TCP
+  sessionAffinity: None  # Redis handles sessions, no need for sticky sessions
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vtp-backend-headless
+  namespace: vtp
+  labels:
+    app: vtp-backend
+spec:
+  type: ClusterIP
+  clusterIP: None  # Headless service for direct pod access
+  selector:
+    app: vtp-backend
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
+    protocol: TCP

@@ -314,10 +314,37 @@ func main() {
 	// 4. Register HTTP Routes
 	log.Println("\n[4/7] Registering HTTP routes...")
 
-	// Health check endpoint
+	// Health check endpoint (comprehensive for load balancers)
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, `{"status":"ok","service":"vtp-platform","version":"1.0.0"}`)
+
+		// Check database connectivity
+		dbHealthy := true
+		if database != nil {
+			if err := database.Conn().Ping(); err != nil {
+				dbHealthy = false
+			}
+		}
+
+		// Determine overall health status
+		healthy := dbHealthy
+		status := "healthy"
+		statusCode := http.StatusOK
+
+		if !healthy {
+			status = "unhealthy"
+			statusCode = http.StatusServiceUnavailable
+		}
+
+		// Get instance ID from environment
+		instanceID := os.Getenv("INSTANCE_ID")
+		if instanceID == "" {
+			instanceID = "unknown"
+		}
+
+		w.WriteHeader(statusCode)
+		fmt.Fprintf(w, `{"status":"%s","service":"vtp-platform","version":"1.0.0","instance":"%s","database":%t}`,
+			status, instanceID, dbHealthy)
 	})
 	log.Println("      ✓ GET /health")
 
