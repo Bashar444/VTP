@@ -24,14 +24,12 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
   isLoading = false,
   className,
 }) => {
-  const t = useTranslations();
-  
   return (
     <div className={cn('w-full max-w-sm bg-gray-900 rounded-lg p-4', className)}>
       <div className="flex items-center gap-2 mb-4">
         <Users size={20} className="text-blue-400" />
         <h3 className="font-semibold text-white">
-          {t('stream.participant.list.title')} ({participants.length})
+          Participants ({participants.length})
         </h3>
       </div>
 
@@ -44,7 +42,7 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
 
         {!isLoading && participants.length === 0 && (
           <div className="text-center text-gray-400 py-8">
-            {t('stream.participant.list.waiting')}
+            Waiting for participants...
           </div>
         )}
 
@@ -58,7 +56,7 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
                 <p className="text-white font-medium truncate">{participant.name}</p>
                 {participant.id === currentUserId && (
                   <span className="px-2 py-0.5 bg-blue-600 text-white text-xs rounded">
-                    {t('stream.participant.list.you')}
+                    You
                   </span>
                 )}
               </div>
@@ -67,14 +65,14 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
 
             <div className="flex items-center gap-1">
               {participant.isAudioEnabled ? (
-                <div className="w-2 h-2 bg-green-500 rounded-full" title={t('stream.participant.audio.on')} />
+                <div className="w-2 h-2 bg-green-500 rounded-full" title="Audio on" />
               ) : (
-                <div className="w-2 h-2 bg-red-500 rounded-full" title={t('stream.participant.audio.off')} />
+                <div className="w-2 h-2 bg-red-500 rounded-full" title="Audio off" />
               )}
               {participant.isVideoEnabled ? (
-                <div className="w-2 h-2 bg-green-500 rounded-full" title={t('stream.participant.video.on')} />
+                <div className="w-2 h-2 bg-green-500 rounded-full" title="Video on" />
               ) : (
-                <div className="w-2 h-2 bg-red-500 rounded-full" title={t('stream.participant.video.off')} />
+                <div className="w-2 h-2 bg-red-500 rounded-full" title="Video off" />
               )}
             </div>
           </div>
