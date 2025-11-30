@@ -14,6 +14,7 @@ import (
 	"github.com/yourusername/vtp-platform/pkg/course"
 	"github.com/yourusername/vtp-platform/pkg/db"
 	"github.com/yourusername/vtp-platform/pkg/instructor"
+	"github.com/yourusername/vtp-platform/pkg/assignment"
 	"github.com/yourusername/vtp-platform/pkg/material"
 	"github.com/yourusername/vtp-platform/pkg/meeting"
 	"github.com/yourusername/vtp-platform/pkg/recording"
@@ -213,6 +214,7 @@ func main() {
 	var subjectHandlers *subject.Handler
 	var meetingHandlers *meeting.Handler
 	var materialHandlers *material.Handler
+	var assignmentHandlers *assignment.Handler
 	
 	if database != nil {
 		log.Println("\n[3d2/7] Initializing instructor management service...")
@@ -246,6 +248,14 @@ func main() {
 		materialRepo := material.NewRepository(database.Conn())
 		materialService := material.NewService(materialRepo)
 		materialHandlers = material.NewHandler(materialService)
+		log.Println("\n[3d6/7] Initializing assignments service...")
+		assignRepo := assignment.NewRepository(database.Conn())
+		assignService := assignment.NewService(assignRepo)
+		assignmentHandlers = assignment.NewHandler(assignService)
+
+		log.Println("      ✓ Assignments repository initialized")
+		log.Println("      ✓ Assignments service initialized")
+		log.Println("      ✓ Assignments handlers initialized")
 
 		log.Println("      ✓ Study material repository initialized")
 		log.Println("      ✓ Study material service initialized")
@@ -577,6 +587,64 @@ func main() {
 		log.Println("      ✓ PUT /api/v1/materials/{id}")
 		log.Println("      ✓ DELETE /api/v1/materials/{id}")
 		log.Println("      ✓ GET /api/v1/materials/{id}/download")
+	}
+
+	// Assignments endpoints (Phase 3+) - only if database available
+	if assignmentHandlers != nil {
+		http.HandleFunc("/api/v1/assignments", func(w http.ResponseWriter, r *http.Request) {
+			switch r.Method {
+			case http.MethodGet:
+				assignmentHandlers.List(w, r)
+			case http.MethodPost:
+				assignmentHandlers.Create(w, r)
+			default:
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		http.HandleFunc("/api/v1/assignments/", func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/api/v1/assignments/" {
+				http.Error(w, "Assignment ID required", http.StatusBadRequest)
+				return
+			}
+
+			// Check for submissions and grading endpoints
+			if len(r.URL.Path) > 27 {
+				if r.URL.Path[len(r.URL.Path)-12:] == "/submissions" {
+					if r.Method == http.MethodGet {
+						assignmentHandlers.ListSubmissions(w, r)
+						return
+					}
+				}
+			}
+			if len(r.URL.Path) > 30 {
+				if r.URL.Path[len(r.URL.Path)-6:] == "/grade" && r.Method == http.MethodPost {
+					assignmentHandlers.Grade(w, r)
+					return
+				}
+			}
+
+			switch r.Method {
+			case http.MethodGet:
+				assignmentHandlers.Get(w, r)
+			case http.MethodPost:
+				// treat as submission creation when path ends with /submit
+				if len(r.URL.Path) > 28 && r.URL.Path[len(r.URL.Path)-7:] == "/submit" {
+					assignmentHandlers.Submit(w, r)
+					return
+				}
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			default:
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		log.Println("      ✓ POST /api/v1/assignments")
+		log.Println("      ✓ GET /api/v1/assignments")
+		log.Println("      ✓ GET /api/v1/assignments/{id}")
+		log.Println("      ✓ POST /api/v1/assignments/{id}/submit")
+		log.Println("      ✓ GET /api/v1/assignments/{id}/submissions")
+		log.Println("      ✓ POST /api/v1/assignments/submissions/{submissionId}/grade")
 	}
 
 	// Adaptive Bitrate (ABR) endpoints (Phase 2B)

@@ -153,3 +153,30 @@ type StudyMaterial struct {
 	CreatedAt    time.Time `db:"created_at" json:"created_at"`
 	UpdatedAt    time.Time `db:"updated_at" json:"updated_at"`
 }
+
+type Assignment struct {
+	ID            string    `json:"id"`
+	CourseID      *string   `json:"course_id"`
+	InstructorID  string    `json:"instructor_id"`
+	TitleAR       string    `json:"title_ar"`
+	DescriptionAR string    `json:"description_ar"`
+	SubjectID     *string   `json:"subject_id"`
+	DueAt         time.Time `json:"due_at"`
+	MaxPoints     int       `json:"max_points"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+type AssignmentSubmission struct {
+	ID           string     `json:"id"`
+	AssignmentID string     `json:"assignment_id"`
+	StudentID    string     `json:"student_id"`
+	SubmittedAt  time.Time  `json:"submitted_at"`
+	FileURL      *string    `json:"file_url"`
+	Notes        *string    `json:"notes"`
+	Grade        *int       `json:"grade"`
+	GradedAt     *time.Time `json:"graded_at"`
+	FeedbackAR   *string    `json:"feedback_ar"`
+	CreatedAt    time.Time  `json:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at"`
+}
