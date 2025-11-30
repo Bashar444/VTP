@@ -32,10 +32,12 @@ func getStorageDir() string {
 	}
 
 	if err := os.MkdirAll(storageDir, 0o755); err != nil {
-		log.Fatalf("❌ Failed to create recordings directory (%s): %v", storageDir, err)
+		log.Printf("⚠ Warning: Failed to create recordings directory (%s): %v", storageDir, err)
+		log.Printf("      Recording functionality may be limited")
+	} else {
+		log.Printf("      ✓ Recording directory: %s", storageDir)
 	}
 
-	log.Printf("      ✓ Recording directory: %s", storageDir)
 	return storageDir
 }
 
