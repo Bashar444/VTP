@@ -26,13 +26,13 @@ func NewPerformanceMonitor(interval time.Duration, logger *log.Logger) *Performa
 
 // PerformanceMetrics holds current performance metrics
 type PerformanceMetrics struct {
-	Timestamp      time.Time
-	NumGoroutines  int
-	MemAllocMB     float64
-	MemTotalMB     float64
-	MemSysMB       float64
-	NumGC          uint32
-	GCPauseMs      float64
+	Timestamp        time.Time
+	NumGoroutines    int
+	MemAllocMB       float64
+	MemTotalMB       float64
+	MemSysMB         float64
+	NumGC            uint32
+	GCPauseMs        float64
 	HeapObjectsCount uint64
 }
 
