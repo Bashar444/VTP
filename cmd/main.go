@@ -180,7 +180,7 @@ func main() {
 		log.Println("      ✓ Room manager initialized")
 		log.Println("      ✓ Signalling handlers registered")
 	}
-	
+
 	var sigAPIHandler *signalling.APIHandler
 	if sigServer != nil {
 		sigAPIHandler = signalling.NewAPIHandler(sigServer, authMiddleware)
@@ -466,42 +466,6 @@ func main() {
 		log.Println("      ✓ POST /api/v1/recordings/start")
 		log.Println("      ✓ POST /api/v1/recordings/{id}/stop")
 		log.Println("      ✓ GET /api/v1/recordings")
-		log.Println("      ✓ GET /api/v1/recordings/{id}")
-		log.Println("      ✓ DELETE /api/v1/recordings/{id}")
-
-		// Metadata CRUD endpoints (unified under /api/v1/recordings)
-		metaRepo := recording.Repository{DB: database.Conn()}
-		metaService := recording.Service{Repo: &metaRepo}
-		metaHandler := recording.Handler{Service: &metaService}
-
-		http.HandleFunc("/api/v1/recordings", func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			if r.Method == http.MethodGet {
-				metaHandler.List(w, r)
-				return
-			}
-			if r.Method == http.MethodPost {
-				metaHandler.Create(w, r)
-				return
-			}
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		})
-		log.Println("      ✓ GET /api/v1/recordings")
-		log.Println("      ✓ POST /api/v1/recordings")
-
-		http.HandleFunc("/api/v1/recordings/", func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			// Expect /api/v1/recordings/{id}
-			if r.Method == http.MethodGet {
-				metaHandler.Get(w, r)
-				return
-			}
-			if r.Method == http.MethodDelete {
-				metaHandler.Delete(w, r)
-				return
-			}
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		})
 		log.Println("      ✓ GET /api/v1/recordings/{id}")
 		log.Println("      ✓ DELETE /api/v1/recordings/{id}")
 	}
