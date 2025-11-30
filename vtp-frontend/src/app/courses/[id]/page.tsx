@@ -108,7 +108,7 @@ export default function CourseDetailPage() {
 
   const handleEnroll = () => {
     if (!user) {
-      router.push('/auth/login');
+      router.push('/login');
       return;
     }
     enrollMutation.mutate();

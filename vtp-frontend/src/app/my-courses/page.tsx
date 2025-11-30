@@ -26,7 +26,7 @@ export default function MyCoursesPage() {
   useEffect(() => {
     // Redirect if not authenticated
     if (!user) {
-      router.push('/auth/login');
+      router.push('/login');
       return;
     }
 

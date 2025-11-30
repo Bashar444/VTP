@@ -43,7 +43,7 @@ export default function DashboardPage() {
   // Redirect if not authenticated
   useEffect(() => {
     if (!user) {
-      router.push('/auth/login');
+      router.push('/login');
     }
   }, [user, router]);
 
