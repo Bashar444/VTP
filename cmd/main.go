@@ -172,12 +172,19 @@ func main() {
 	log.Println("\n[3b/5] Initializing WebRTC signalling server...")
 	sigServer, err := signalling.NewSignallingServer()
 	if err != nil {
-		log.Fatalf("❌ Failed to initialize signalling server: %v", err)
+		log.Printf("⚠ Warning: Failed to initialize signalling server: %v", err)
+		log.Println("      WebRTC/live streaming features will be disabled")
+		log.Println("      API and authentication will still work")
+	} else {
+		log.Println("      ✓ Socket.IO server initialized")
+		log.Println("      ✓ Room manager initialized")
+		log.Println("      ✓ Signalling handlers registered")
 	}
-	sigAPIHandler := signalling.NewAPIHandler(sigServer, authMiddleware)
-	log.Println("      ✓ Socket.IO server initialized")
-	log.Println("      ✓ Room manager initialized")
-	log.Println("      ✓ Signalling handlers registered")
+	
+	var sigAPIHandler *signalling.APIHandler
+	if sigServer != nil {
+		sigAPIHandler = signalling.NewAPIHandler(sigServer, authMiddleware)
+	}
 
 	// Ensure recording directories exist and configure ffmpeg path
 	storageDir := getStorageDir()
@@ -430,24 +437,28 @@ func main() {
 		log.Println("      ✓ POST /api/v1/auth/2fa/backup-codes/regenerate (protected)")
 	}
 
-	// Signalling endpoints (WebRTC)
-	http.Handle("/socket.io/", sigServer)
-	log.Println("      ✓ WebSocket /socket.io/ (WebRTC signalling)")
+	// Signalling endpoints (WebRTC) - only if signalling server initialized
+	if sigServer != nil && sigAPIHandler != nil {
+		http.Handle("/socket.io/", sigServer)
+		log.Println("      ✓ WebSocket /socket.io/ (WebRTC signalling)")
 
-	http.HandleFunc("/api/v1/signalling/health", sigAPIHandler.HealthHandler)
-	log.Println("      ✓ GET /api/v1/signalling/health")
+		http.HandleFunc("/api/v1/signalling/health", sigAPIHandler.HealthHandler)
+		log.Println("      ✓ GET /api/v1/signalling/health")
 
-	http.HandleFunc("/api/v1/signalling/room/stats", sigAPIHandler.GetRoomStatsHandler)
-	log.Println("      ✓ GET /api/v1/signalling/room/stats")
+		http.HandleFunc("/api/v1/signalling/room/stats", sigAPIHandler.GetRoomStatsHandler)
+		log.Println("      ✓ GET /api/v1/signalling/room/stats")
 
-	http.HandleFunc("/api/v1/signalling/rooms/stats", sigAPIHandler.GetAllRoomStatsHandler)
-	log.Println("      ✓ GET /api/v1/signalling/rooms/stats")
+		http.HandleFunc("/api/v1/signalling/rooms/stats", sigAPIHandler.GetAllRoomStatsHandler)
+		log.Println("      ✓ GET /api/v1/signalling/rooms/stats")
 
-	http.HandleFunc("/api/v1/signalling/room/create", sigAPIHandler.CreateRoomHandler)
-	log.Println("      ✓ POST /api/v1/signalling/room/create")
+		http.HandleFunc("/api/v1/signalling/room/create", sigAPIHandler.CreateRoomHandler)
+		log.Println("      ✓ POST /api/v1/signalling/room/create")
 
-	http.HandleFunc("/api/v1/signalling/room/delete", sigAPIHandler.DeleteRoomHandler)
-	log.Println("      ✓ DELETE /api/v1/signalling/room/delete")
+		http.HandleFunc("/api/v1/signalling/room/delete", sigAPIHandler.DeleteRoomHandler)
+		log.Println("      ✓ DELETE /api/v1/signalling/room/delete")
+	} else {
+		log.Println("      ⚠ WebRTC signalling endpoints disabled")
+	}
 
 	// Recording endpoints (Phase 2a) - only if database available
 	if recordingHandlers != nil {
