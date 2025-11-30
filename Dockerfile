@@ -32,6 +32,9 @@ ENV TZ=UTC
 # Create non-root user
 RUN addgroup -S app && adduser -S app -G app
 
+# Create recordings directory with correct permissions
+RUN mkdir -p /app/recordings && chown -R app:app /app/recordings
+
 # Copy binary from builder
 COPY --from=builder /app/main .
 
@@ -40,6 +43,9 @@ COPY migrations ./migrations
 
 # Copy frontend build (when ready)
 # COPY frontend/dist ./frontend/dist
+
+# Set ownership of all files
+RUN chown -R app:app /app
 
 # Expose port
 EXPOSE 8080

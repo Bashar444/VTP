@@ -74,6 +74,21 @@ CREATE TABLE IF NOT EXISTS live_sessions (
 CREATE INDEX IF NOT EXISTS idx_live_sessions_lesson_id ON live_sessions(lesson_id);
 CREATE INDEX IF NOT EXISTS idx_live_sessions_start_time ON live_sessions(start_time);
 
+-- Rooms table (for WebRTC signaling)
+CREATE TABLE IF NOT EXISTS rooms (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    lesson_id UUID REFERENCES lessons(id) ON DELETE CASCADE,
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    max_participants INTEGER DEFAULT 50,
+    is_locked BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    closed_at TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_rooms_lesson_id ON rooms(lesson_id);
+CREATE INDEX IF NOT EXISTS idx_rooms_created_by ON rooms(created_by);
+
 -- Recordings table
 CREATE TABLE IF NOT EXISTS recordings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
