@@ -18,6 +18,7 @@ import (
 	"github.com/Bashar444/VTP/pkg/instructor"
 	"github.com/Bashar444/VTP/pkg/material"
 	"github.com/Bashar444/VTP/pkg/meeting"
+	"github.com/Bashar444/VTP/pkg/middleware"
 	"github.com/Bashar444/VTP/pkg/recording"
 	"github.com/Bashar444/VTP/pkg/signalling"
 	"github.com/Bashar444/VTP/pkg/streaming"
@@ -873,12 +874,15 @@ func main() {
 	log.Println("\n  Example Authorization Header:")
 	log.Println("    Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
 
-	log.Println("\n═══════════════════════════════════════════════════════════════")
+	log.Println("═══════════════════════════════════════════════════════════════")
 	log.Println("  Status: ✓ Phase 1a Complete - Phase 1b Complete - Phase 2a Complete - Phase 3 Complete - Phase 2B Day 3 Ready")
 	log.Println("═══════════════════════════════════════════════════════════════")
 
+	// Wrap the default ServeMux with CORS middleware
+	handler := middleware.CORSMiddleware(http.DefaultServeMux)
+
 	// Start server
-	if err := http.ListenAndServe(serverAddr, nil); err != nil {
+	if err := http.ListenAndServe(serverAddr, handler); err != nil {
 		log.Fatalf("❌ Server error: %v", err)
 	}
 }
