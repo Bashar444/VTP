@@ -26,40 +26,31 @@ func NewABRHandlers(manager *AdaptiveBitrateManager, logger *log.Logger) *ABRHan
 
 // RegisterABRRoutes registers all ABR HTTP routes
 func (h *ABRHandlers) RegisterABRRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/api/v1/recordings/", func(w http.ResponseWriter, r *http.Request) {
-		// Extract recording ID and route to appropriate handler
-		parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/api/v1/recordings/"), "/")
-		if len(parts) < 3 {
-			http.NotFound(w, r)
-			return
+	// Use specific ABR routes to avoid conflicts
+	mux.HandleFunc("/api/v1/recordings/{id}/abr/quality", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			recordingID := r.PathValue("id")
+			h.SelectQualityHandler(w, r, recordingID)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
+	})
 
-		recordingID := parts[0]
+	mux.HandleFunc("/api/v1/recordings/{id}/abr/stats", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			recordingID := r.PathValue("id")
+			h.GetABRStatsHandler(w, r, recordingID)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
 
-		// Route to ABR endpoints
-		if len(parts) >= 3 && parts[1] == "abr" {
-			switch parts[2] {
-			case "quality":
-				if r.Method == http.MethodPost {
-					h.SelectQualityHandler(w, r, recordingID)
-				} else {
-					http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-				}
-			case "stats":
-				if r.Method == http.MethodGet {
-					h.GetABRStatsHandler(w, r, recordingID)
-				} else {
-					http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-				}
-			case "metrics":
-				if r.Method == http.MethodPost {
-					h.RecordMetricsHandler(w, r, recordingID)
-				} else {
-					http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-				}
-			default:
-				http.NotFound(w, r)
-			}
+	mux.HandleFunc("/api/v1/recordings/{id}/abr/metrics", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			recordingID := r.PathValue("id")
+			h.RecordMetricsHandler(w, r, recordingID)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
 }
