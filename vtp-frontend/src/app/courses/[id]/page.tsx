@@ -247,6 +247,23 @@ export default function CourseDetailPage() {
                     <p className="text-sm text-gray-400">
                       {t('course.progress.remainingMessage', { remaining: Math.round(100 - (progress?.completionPercentage || 0)) })}
                     </p>
+                    {/* Live class actions */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                      <button
+                        onClick={() => router.push(`/stream/${courseId}`)}
+                        className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded transition-colors"
+                      >
+                        Join Live Class
+                      </button>
+                      {user?.role === 'instructor' && (
+                        <button
+                          onClick={() => router.push(`/stream/${courseId}`)}
+                          className="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded transition-colors"
+                        >
+                          Start Live Class
+                        </button>
+                      )}
+                    </div>
                     {error && (
                       <p className="text-xs text-red-400">{error}</p>
                     )}
