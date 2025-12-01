@@ -34,6 +34,9 @@ func (ch *CourseHandlers) RegisterCourseRoutes(mux *http.ServeMux) {
 	// Course Management
 	mux.HandleFunc("/api/v1/courses", ch.handleCourses)
 	mux.HandleFunc("/api/v1/courses/", ch.handleCourseDetail)
+	
+	// Student's own enrollments
+	mux.HandleFunc("/api/v1/courses/my-enrollments", ch.GetMyEnrollments)
 
 	ch.logger.Println("Course routes registered")
 }
@@ -481,6 +484,32 @@ func (ch *CourseHandlers) GetCourseStats(w http.ResponseWriter, r *http.Request,
 	}
 
 	ch.respondJSON(w, http.StatusOK, response)
+}
+
+// GetMyEnrollments returns courses the authenticated user is enrolled in
+func (ch *CourseHandlers) GetMyEnrollments(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		ch.respondError(w, http.StatusMethodNotAllowed, "Method not allowed", nil)
+		return
+	}
+
+	// Get user ID from context (set by auth middleware)
+	userID, ok := r.Context().Value("user_id").(uuid.UUID)
+	if !ok {
+		ch.respondError(w, http.StatusUnauthorized, "Unauthorized", nil)
+		return
+	}
+
+	enrollments, err := ch.service.GetStudentEnrollments(r.Context(), userID)
+	if err != nil {
+		ch.respondError(w, http.StatusInternalServerError, "Failed to fetch enrollments", err)
+		return
+	}
+
+	ch.respondJSON(w, http.StatusOK, map[string]interface{}{
+		"enrollments": enrollments,
+		"total":       len(enrollments),
+	})
 }
 
 // Helper functions

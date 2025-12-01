@@ -282,6 +282,41 @@ func (cs *CourseService) ListEnrollments(ctx context.Context, courseID uuid.UUID
 	return enrollments, nil
 }
 
+// GetStudentEnrollments lists courses a student is enrolled in
+func (cs *CourseService) GetStudentEnrollments(ctx context.Context, studentID uuid.UUID) ([]*CourseEnrollment, error) {
+	query := `
+		SELECT e.id, e.course_id, e.student_id, e.enrollment_date, e.status,
+		       c.code, c.name, c.description, c.instructor_id
+		FROM course_enrollments e
+		JOIN courses c ON e.course_id = c.id
+		WHERE e.student_id = $1 AND e.status = $2
+		ORDER BY e.enrollment_date DESC
+	`
+
+	rows, err := cs.db.QueryContext(ctx, query, studentID, EnrollmentActive)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list student enrollments: %w", err)
+	}
+	defer rows.Close()
+
+	var enrollments []*CourseEnrollment
+	for rows.Next() {
+		enrollment := &CourseEnrollment{}
+		var code, name, description string
+		var instructorID uuid.UUID
+		if err := rows.Scan(
+			&enrollment.ID, &enrollment.CourseID, &enrollment.StudentID,
+			&enrollment.EnrollmentDate, &enrollment.Status,
+			&code, &name, &description, &instructorID,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan enrollment: %w", err)
+		}
+		enrollments = append(enrollments, enrollment)
+	}
+
+	return enrollments, nil
+}
+
 // SetPermission sets user permission for a course
 func (cs *CourseService) SetPermission(ctx context.Context, courseID, userID uuid.UUID, role string) (*CoursePermission, error) {
 	id := uuid.New()
