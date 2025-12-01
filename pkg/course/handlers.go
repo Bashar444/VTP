@@ -34,7 +34,7 @@ func (ch *CourseHandlers) RegisterCourseRoutes(mux *http.ServeMux) {
 	// Course Management
 	mux.HandleFunc("/api/v1/courses", ch.handleCourses)
 	mux.HandleFunc("/api/v1/courses/", ch.handleCourseDetail)
-	
+
 	// Student's own enrollments
 	mux.HandleFunc("/api/v1/courses/my-enrollments", ch.GetMyEnrollments)
 
