@@ -33,15 +33,16 @@ export default function MyCoursesPage() {
     const fetchCourses = async () => {
       try {
         setIsLoading(true);
-        const [enrolled, completed] = await Promise.all([
-          CourseService.getEnrolledCourses(),
-          CourseService.getCompletedCourses(),
-        ]);
-        // Sanitize to plain objects to avoid Next.js serialization issues
-        const plainEnrolled: EnrolledCourse[] = enrolled.map(c => JSON.parse(JSON.stringify(c)) as EnrolledCourse);
-        const plainCompleted: Course[] = completed.map(c => JSON.parse(JSON.stringify(c)) as Course);
-        setEnrolledCourses(plainEnrolled);
-        setCompletedCourses(plainCompleted);
+        // For now, set empty arrays since backend endpoints don't exist yet
+        setEnrolledCourses([]);
+        setCompletedCourses([]);
+        // TODO: Uncomment when backend implements these endpoints
+        // const [enrolled, completed] = await Promise.all([
+        //   CourseService.getEnrolledCourses(),
+        //   CourseService.getCompletedCourses(),
+        // ]);
+        // setEnrolledCourses(enrolled.map(c => JSON.parse(JSON.stringify(c)) as EnrolledCourse));
+        // setCompletedCourses(completed.map(c => JSON.parse(JSON.stringify(c)) as Course));
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load courses');
       } finally {

@@ -54,22 +54,18 @@ export default function DashboardPage() {
 
       try {
         setIsLoading(true);
-        const [dashMetrics, engagementData, courseData, systemAlerts] = await Promise.all([
-          AnalyticsService.getDashboardMetrics(),
-          AnalyticsService.getEngagementMetrics(undefined, undefined, 'daily'),
-          AnalyticsService.getTopPerformingCourses(10),
-          AnalyticsService.getSystemAlerts(true),
-        ]);
-        // Sanitize fetched analytics data to ensure all are plain objects
-        const plainMetrics: DashboardMetrics = JSON.parse(JSON.stringify(dashMetrics)) as DashboardMetrics;
-        const plainEngagement: EngagementMetrics[] = engagementData.map(e => JSON.parse(JSON.stringify(e)) as EngagementMetrics);
-        const plainCoursesPerf: CoursePerformance[] = courseData.map(c => JSON.parse(JSON.stringify(c)) as CoursePerformance);
-        const plainAlerts: SystemAlert[] = systemAlerts.map(a => JSON.parse(JSON.stringify(a)) as SystemAlert);
-        setMetrics(plainMetrics);
-        setEngagement(plainEngagement);
-        setCourses(plainCoursesPerf);
-        setAlerts(plainAlerts);
-        // Also fetch network quality
+        // TODO: Enable when backend implements analytics endpoints
+        // const [dashMetrics, engagementData, courseData, systemAlerts] = await Promise.all([
+        //   AnalyticsService.getDashboardMetrics(),
+        //   AnalyticsService.getEngagementMetrics(undefined, undefined, 'daily'),
+        //   AnalyticsService.getTopPerformingCourses(10),
+        //   AnalyticsService.getSystemAlerts(true),
+        // ]);
+        // For now, set empty/default data
+        setMetrics(null);
+        setEngagement([]);
+        setCourses([]);
+        setAlerts([]);
       } catch (err) {
         setError(err instanceof Error ? err.message : t('dashboard.error.load'));
       } finally {

@@ -132,18 +132,18 @@ class CourseServiceImpl {
   }
 
   /**
-   * Get user's enrolled courses
+   * Get user's enrolled courses (uses current authenticated user)
    */
-  async getEnrolledCourses(userId: string): Promise<Enrollment[]> {
-    const response = await api.get(`/users/${userId}/courses`);
+  async getEnrolledCourses(): Promise<Enrollment[]> {
+    const response = await api.get(`/api/v1/courses/enrollments`);
     return response.data;
   }
 
   /**
-   * Get user's completed courses
+   * Get user's completed courses (uses current authenticated user)
    */
-  async getCompletedCourses(userId: string): Promise<Course[]> {
-    const response = await api.get(`/users/${userId}/courses/completed`);
+  async getCompletedCourses(): Promise<Course[]> {
+    const response = await api.get(`/api/v1/courses/completed`);
     return response.data;
   }
 
