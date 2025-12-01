@@ -13,7 +13,7 @@ export default function RegisterPage() {
             VTP
           </h1>
           <h2 className="mt-2 text-center text-xl font-bold text-gray-900">
-            Create your account
+            Create Your Account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Join our educational platform
