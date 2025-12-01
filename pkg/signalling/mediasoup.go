@@ -285,6 +285,12 @@ func (ss *SignallingServer) RegisterMediasoupHandlers(mi *MediasoupIntegration) 
 		}
 
 		s.Emit("producer-created", producer)
+		// Notify other peers in the room about new producer (for consumers to subscribe)
+		ss.IO.BroadcastToRoom("", req.RoomID, "newProducer", map[string]string{
+			"producerId": producer.ID,
+			"peerId":     s.ID(),
+			"kind":       producer.Kind,
+		})
 		log.Printf("✓ Producer created for client %s (kind: %s)", s.ID(), req.Kind)
 	})
 

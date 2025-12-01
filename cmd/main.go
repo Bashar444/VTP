@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -457,6 +458,101 @@ func main() {
 
 		http.HandleFunc("/api/v1/signalling/room/delete", sigAPIHandler.DeleteRoomHandler)
 		log.Println("      ✓ DELETE /api/v1/signalling/room/delete")
+
+		// Minimal streaming REST helpers to support frontend service
+		http.HandleFunc("/api/v1/streaming/rooms/", func(w http.ResponseWriter, r *http.Request) {
+			// Expected: /api/v1/streaming/rooms/{roomId}/participants or /record
+			w.Header().Set("Content-Type", "application/json")
+			path := r.URL.Path
+			// strip prefix
+			prefix := "/api/v1/streaming/rooms/"
+			if len(path) <= len(prefix) {
+				http.NotFound(w, r)
+				return
+			}
+			rest := path[len(prefix):] // {roomId}/...
+			// split on first '/'
+			roomID := rest
+			action := ""
+			if idx := len(rest); idx > 0 {
+				for i := 0; i < len(rest); i++ {
+					if rest[i] == '/' {
+						roomID = rest[:i]
+						action = rest[i+1:]
+						break
+					}
+				}
+			}
+
+			if roomID == "" {
+				w.WriteHeader(http.StatusBadRequest)
+				fmt.Fprintf(w, `{"error":"roomId required"}`)
+				return
+			}
+
+			// participants endpoint
+			if action == "participants" && r.Method == http.MethodGet {
+				room, ok := sigServer.RoomManager.GetRoom(roomID)
+				if !ok {
+					w.WriteHeader(http.StatusNotFound)
+					fmt.Fprintf(w, `{"error":"room not found"}`)
+					return
+				}
+				json.NewEncoder(w).Encode(room.GetAllParticipants())
+				return
+			}
+
+			// record stub
+			if action == "record" && r.Method == http.MethodPost {
+				// Stub a session id; real integration can hook recording service
+				json.NewEncoder(w).Encode(map[string]interface{}{
+					"sessionId": fmt.Sprintf("rec-%s", roomID),
+					"status":    "started",
+				})
+				return
+			}
+
+			http.NotFound(w, r)
+		})
+		log.Println("      ✓ GET /api/v1/streaming/rooms/{roomId}/participants")
+		log.Println("      ✓ POST /api/v1/streaming/rooms/{roomId}/record")
+
+		http.HandleFunc("/api/v1/streaming/sessions/", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			path := r.URL.Path // /api/v1/streaming/sessions/{id}/stop-record or /metrics
+			prefix := "/api/v1/streaming/sessions/"
+			if len(path) <= len(prefix) {
+				http.NotFound(w, r)
+				return
+			}
+			rest := path[len(prefix):]
+			sessionID := rest
+			action := ""
+			for i := 0; i < len(rest); i++ {
+				if rest[i] == '/' {
+					sessionID = rest[:i]
+					action = rest[i+1:]
+					break
+				}
+			}
+
+			if action == "stop-record" && r.Method == http.MethodPost {
+				json.NewEncoder(w).Encode(map[string]interface{}{
+					"sessionId": sessionID,
+					"status":    "stopped",
+				})
+				return
+			}
+
+			if action == "metrics" && r.Method == http.MethodPost {
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+
+			http.NotFound(w, r)
+		})
+		log.Println("      ✓ POST /api/v1/streaming/sessions/{sessionId}/stop-record")
+		log.Println("      ✓ POST /api/v1/streaming/sessions/{sessionId}/metrics")
 	} else {
 		log.Println("      ⚠ WebRTC signalling endpoints disabled")
 	}
