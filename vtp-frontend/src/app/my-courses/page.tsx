@@ -1,104 +1,42 @@
 "use client";
-export const dynamic = 'force-dynamic';
 
-import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/store';
-import { CourseService } from '@/services/course.service';
-import { CourseCard } from '@/components/courses/CourseCard';
-import type { Course } from '@/services/course.service';
-import { Play, BookOpen, CheckCircle } from 'lucide-react';
-
-interface EnrolledCourse extends Course {
-  progress?: number;
-  lastWatchedDate?: string;
-}
+import { useEffect } from 'react';
+import Link from 'next/link';
 
 export default function MyCoursesPage() {
-  const router = useRouter();
   const { user } = useAuth();
-  const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
-  const [completedCourses, setCompletedCourses] = useState<Course[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'in-progress' | 'completed'>('in-progress');
+  const router = useRouter();
 
   useEffect(() => {
-    // Redirect if not authenticated
     if (!user) {
       router.push('/login');
-      return;
     }
-
-    const fetchCourses = async () => {
-      try {
-        setIsLoading(true);
-        // For now, set empty arrays since backend endpoints don't exist yet
-        setEnrolledCourses([]);
-        setCompletedCourses([]);
-        // TODO: Uncomment when backend implements these endpoints
-        // const [enrolled, completed] = await Promise.all([
-        //   CourseService.getEnrolledCourses(),
-        //   CourseService.getCompletedCourses(),
-        // ]);
-        // setEnrolledCourses(enrolled.map(c => JSON.parse(JSON.stringify(c)) as EnrolledCourse));
-        // setCompletedCourses(completed.map(c => JSON.parse(JSON.stringify(c)) as Course));
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load courses');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCourses();
   }, [user, router]);
 
-  const handleContinueWatching = (courseId: string) => {
-    // In a real app, this would fetch the last watched video
-    router.push(`/courses/${courseId}`);
-  };
-
-  const handleViewCourse = (courseId: string) => {
-    router.push(`/courses/${courseId}`);
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-900 pt-24 pb-12">
-        <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-bold text-white mb-8">My Courses</h1>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-gray-800 rounded-lg animate-pulse h-80" />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-900 pt-24 pb-12">
-      <div className="container mx-auto px-4">
-        {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">My Courses</h1>
-          <p className="text-gray-400">
-            {enrolledCourses.length + completedCourses.length} courses total
+    <div className="min-h-screen bg-gray-50 pt-24 pb-12">
+      <div className="max-w-7xl mx-auto px-4">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">My Courses</h1>
+
+        <div className="bg-white rounded-lg shadow p-8 text-center">
+          <p className="text-gray-600 mb-4">
+            You haven't enrolled in any courses yet.
           </p>
+          <Link
+            href="/courses"
+            className="inline-block bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700"
+          >
+            Browse Courses
+          </Link>
         </div>
-
-        {error && (
-          <div className="bg-red-900/20 border border-red-700 rounded-lg p-4 mb-6">
-            <p className="text-red-400">{error}</p>
-          </div>
-        )}
-
-        {/* Tabs */}
-        <div className="mb-8 border-b border-gray-700">
-          <div className="flex gap-8">
-            <button
-              onClick={() => setActiveTab('in-progress')}
+      </div>
+    </div>
+  );
+}
               className={`py-4 px-2 font-semibold border-b-2 transition-colors ${
                 activeTab === 'in-progress'
                   ? 'text-blue-400 border-blue-400'

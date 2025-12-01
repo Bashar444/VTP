@@ -1,99 +1,39 @@
 "use client";
-export const dynamic = 'force-dynamic';
 
-import { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/store';
-import { AnalyticsService } from '@/services/analytics.service';
-import { AnalyticsCard, StatGrid, InsightCard } from '@/components/analytics/AnalyticsCard';
-import { LineChart, BarChart, PieChart } from '@/components/analytics/Charts';
-import { AnalyticsFilters, DataTable, AlertList } from '@/components/analytics/AnalyticsFilters';
-import type {
-  DashboardMetrics,
-  EngagementMetrics,
-  CoursePerformance,
-  SystemAlert,
-} from '@/services/analytics.service';
-import { TrendingUp, Users, BookOpen, AlertCircle, DollarSign, Activity } from 'lucide-react';
-import NetworkStatus from '@/components/NetworkStatus';
-import QualitySelector from '@/components/QualitySelector';
-import EdgeNodeViewer from '@/components/EdgeNodeViewer';
-import MetricsDisplay from '@/components/MetricsDisplay';
-import { g5Service } from '@/services/g5Service';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import Link from 'next/link';
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const t = useTranslations();
   const { user } = useAuth();
-  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
-  const [engagement, setEngagement] = useState<EngagementMetrics[]>([]);
-  const [courses, setCourses] = useState<CoursePerformance[]>([]);
-  const [alerts, setAlerts] = useState<SystemAlert[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { data: networkQuality, isLoading: networkQualityLoading } = useQuery({
-    queryKey: ['network-quality'],
-    queryFn: async () => await g5Service.getNetworkQuality(),
-    refetchInterval: 30000,
-    staleTime: 15000,
-  });
+  const router = useRouter();
 
-  // Redirect if not authenticated
   useEffect(() => {
     if (!user) {
       router.push('/login');
+      return;
+    }
+
+    // Redirect based on role
+    if (user.role === 'student') {
+      router.push('/my-courses');
+    } else if (user.role === 'instructor') {
+      router.push('/instructor/courses');
+    } else if (user.role === 'admin') {
+      router.push('/admin/dashboard');
     }
   }, [user, router]);
 
-  // Fetch analytics + network quality data
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!user) return;
-
-      try {
-        setIsLoading(true);
-        // TODO: Enable when backend implements analytics endpoints
-        // const [dashMetrics, engagementData, courseData, systemAlerts] = await Promise.all([
-        //   AnalyticsService.getDashboardMetrics(),
-        //   AnalyticsService.getEngagementMetrics(undefined, undefined, 'daily'),
-        //   AnalyticsService.getTopPerformingCourses(10),
-        //   AnalyticsService.getSystemAlerts(true),
-        // ]);
-        // For now, set empty/default data
-        setMetrics(null);
-        setEngagement([]);
-        setCourses([]);
-        setAlerts([]);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t('dashboard.error.load'));
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [user]);
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-900 pt-24 pb-12">
-        <div className="container mx-auto px-4">
-          <div className="bg-red-900/20 border border-red-700 rounded-lg p-6">
-            <p className="text-red-400">{error}</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-900 pt-24 pb-12">
-      <div className="container mx-auto px-4">
-        {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">{t('dashboard.title')}</h1>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Redirecting...</p>
+      </div>
+    </div>
+  );
+}
           <p className="text-gray-400">{t('dashboard.subtitle')}</p>
         </div>
 
