@@ -5,12 +5,16 @@
 *.so
 *.so.*
 *.dylib
+/bin/
+/vtp
+/main
 
 # Test binary, built with `go test -c`
 *.test
 
 # Output of the go coverage tool
 *.out
+coverage/
 
 # Dependency directories
 vendor/
@@ -47,7 +51,13 @@ node_modules/
 # Build outputs
 dist/
 build/
+.next/
 
 # Logs
 *.log
 logs/
+
+# Frontend test artifacts
+/vtp-frontend/coverage/
+/vtp-frontend/playwright-report/
+/vtp-frontend/.nyc_output/

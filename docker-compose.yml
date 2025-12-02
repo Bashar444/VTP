@@ -55,8 +55,6 @@ services:
       MEDIASOUP_RTC_MIN_PORT: 40000
       MEDIASOUP_RTC_MAX_PORT: 49999
       LOG_LEVEL: info
-    volumes:
-      - ./mediasoup-sfu/logs:/app/logs
     depends_on:
       redis:
         condition: service_healthy

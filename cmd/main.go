@@ -11,7 +11,9 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/Bashar444/VTP/pkg/admin"
 	"github.com/Bashar444/VTP/pkg/assignment"
+	"github.com/Bashar444/VTP/pkg/attendance"
 	"github.com/Bashar444/VTP/pkg/auth"
 	"github.com/Bashar444/VTP/pkg/course"
 	"github.com/Bashar444/VTP/pkg/db"
@@ -20,10 +22,12 @@ import (
 	"github.com/Bashar444/VTP/pkg/material"
 	"github.com/Bashar444/VTP/pkg/meeting"
 	"github.com/Bashar444/VTP/pkg/middleware"
+	"github.com/Bashar444/VTP/pkg/notification"
 	"github.com/Bashar444/VTP/pkg/recording"
 	"github.com/Bashar444/VTP/pkg/signalling"
 	"github.com/Bashar444/VTP/pkg/streaming"
 	"github.com/Bashar444/VTP/pkg/subject"
+	"github.com/Bashar444/VTP/pkg/videointegration"
 	"github.com/joho/godotenv"
 )
 
@@ -245,6 +249,9 @@ func main() {
 	var meetingHandlers *meeting.Handler
 	var materialHandlers *material.Handler
 	var assignmentHandlers *assignment.Handler
+	var attendanceHandlers *attendance.Handler
+	var notificationHandlers *notification.Handler
+	var videoIntegrationHandlers *videointegration.Handler
 
 	if database != nil {
 		log.Println("\n[3d2/7] Initializing instructor management service...")
@@ -290,6 +297,46 @@ func main() {
 		log.Println("      ✓ Study material repository initialized")
 		log.Println("      ✓ Study material service initialized")
 		log.Println("      ✓ Study material handlers initialized")
+
+		// Initialize Attendance Service (Educational SaaS)
+		log.Println("\n[3d7/7] Initializing attendance tracking service...")
+		attendanceRepo := attendance.NewRepository(database.Conn())
+		attendanceService := attendance.NewService(attendanceRepo)
+		attendanceHandlers = attendance.NewHandler(attendanceService)
+
+		log.Println("      ✓ Attendance repository initialized")
+		log.Println("      ✓ Attendance service initialized")
+		log.Println("      ✓ Attendance handlers initialized")
+
+		// Initialize Notification Service (Educational SaaS)
+		log.Println("\n[3d8/7] Initializing notification service...")
+		notificationRepo := notification.NewRepository(database.Conn())
+		notificationService := notification.NewService(notificationRepo, log.New(os.Stderr, "[Notification] ", log.LstdFlags))
+		notificationHandlers = notification.NewHandler(notificationService)
+
+		log.Println("      ✓ Notification repository initialized")
+		log.Println("      ✓ Notification service initialized")
+		log.Println("      ✓ Notification handlers initialized")
+
+		// Initialize Video Integration Service (Jitsi/Google Meet/Zoom)
+		log.Println("\n[3d9/7] Initializing video integration service...")
+		videoIntegrationRepo := videointegration.NewRepository(database.Conn())
+		videoIntegrationService := videointegration.NewService(videoIntegrationRepo, log.New(os.Stderr, "[VideoIntegration] ", log.LstdFlags))
+
+		// Register Jitsi provider
+		jitsiURL := os.Getenv("JITSI_SERVER_URL")
+		if jitsiURL == "" {
+			jitsiURL = "https://meet.jit.si"
+		}
+		jitsiProvider := videointegration.NewJitsiProvider(jitsiURL, log.New(os.Stderr, "[Jitsi] ", log.LstdFlags))
+		videoIntegrationService.RegisterProvider(videointegration.ProviderJitsi, jitsiProvider)
+
+		videoIntegrationHandlers = videointegration.NewHandler(videoIntegrationService)
+
+		log.Println("      ✓ Video integration repository initialized")
+		log.Println("      ✓ Video integration service initialized (Jitsi/Meet/Zoom)")
+		log.Println("      ✓ Jitsi provider registered")
+		log.Println("      ✓ Video integration handlers initialized")
 	} else {
 		log.Println("\n[3d2-5/7] Skipping instructor/subject/meeting/material services (no database)")
 	}
@@ -332,6 +379,15 @@ func main() {
 
 	// 4. Register HTTP Routes
 	log.Println("\n[4/7] Registering HTTP routes...")
+
+	// Admin (announcements) - requires auth + role admin
+	if authMiddleware != nil {
+		adminStore := admin.NewStore()
+		adminHandler := admin.NewHandler(adminStore, authMiddleware)
+		adminHandler.RegisterRoutes(http.DefaultServeMux)
+		log.Println("      ✓ POST /api/v1/admin/announce (admin)")
+		log.Println("      ✓ GET  /api/v1/admin/announcements (admin)")
+	}
 
 	// Health check endpoint (comprehensive for load balancers)
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -852,6 +908,177 @@ func main() {
 		log.Println("      ✓ POST /api/v1/assignments/{id}/submit")
 		log.Println("      ✓ GET /api/v1/assignments/{id}/submissions")
 		log.Println("      ✓ POST /api/v1/assignments/submissions/{submissionId}/grade")
+	}
+
+	// Attendance endpoints (Educational SaaS) - only if database available
+	if attendanceHandlers != nil {
+		http.HandleFunc("/api/v1/attendance", func(w http.ResponseWriter, r *http.Request) {
+			switch r.Method {
+			case http.MethodPost:
+				attendanceHandlers.RecordAttendance(w, r)
+			default:
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		http.HandleFunc("/api/v1/attendance/bulk", func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodPost {
+				attendanceHandlers.BulkRecordAttendance(w, r)
+			} else {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		http.HandleFunc("/api/v1/attendance/student/", func(w http.ResponseWriter, r *http.Request) {
+			path := r.URL.Path
+			// Check for /stats endpoint
+			if len(path) > 25 && path[len(path)-6:] == "/stats" {
+				attendanceHandlers.GetStudentStats(w, r)
+			} else {
+				attendanceHandlers.GetStudentAttendance(w, r)
+			}
+		})
+
+		http.HandleFunc("/api/v1/attendance/class/", func(w http.ResponseWriter, r *http.Request) {
+			attendanceHandlers.GetClassAttendance(w, r)
+		})
+
+		http.HandleFunc("/api/v1/attendance/meeting/", func(w http.ResponseWriter, r *http.Request) {
+			attendanceHandlers.GetMeetingAttendance(w, r)
+		})
+
+		http.HandleFunc("/api/v1/attendance/report", func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodGet {
+				attendanceHandlers.GenerateReport(w, r)
+			} else {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		log.Println("      ✓ POST /api/v1/attendance")
+		log.Println("      ✓ POST /api/v1/attendance/bulk")
+		log.Println("      ✓ GET /api/v1/attendance/student/{id}")
+		log.Println("      ✓ GET /api/v1/attendance/student/{id}/stats")
+		log.Println("      ✓ GET /api/v1/attendance/class/{id}")
+		log.Println("      ✓ GET /api/v1/attendance/meeting/{id}")
+		log.Println("      ✓ GET /api/v1/attendance/report")
+	}
+
+	// Notification endpoints (Educational SaaS) - only if database available
+	if notificationHandlers != nil {
+		http.HandleFunc("/api/v1/notifications", func(w http.ResponseWriter, r *http.Request) {
+			switch r.Method {
+			case http.MethodGet:
+				notificationHandlers.GetUserNotifications(w, r)
+			case http.MethodPost:
+				notificationHandlers.CreateNotification(w, r)
+			default:
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		http.HandleFunc("/api/v1/notifications/", func(w http.ResponseWriter, r *http.Request) {
+			path := r.URL.Path
+			if path == "/api/v1/notifications/" {
+				http.Error(w, "Notification ID required", http.StatusBadRequest)
+				return
+			}
+
+			// Check for /read endpoint
+			if len(path) > 24 && path[len(path)-5:] == "/read" {
+				if r.Method == http.MethodPost {
+					notificationHandlers.MarkAsRead(w, r)
+				} else {
+					http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+				}
+				return
+			}
+
+			switch r.Method {
+			case http.MethodGet:
+				notificationHandlers.GetNotification(w, r)
+			case http.MethodDelete:
+				notificationHandlers.DeleteNotification(w, r)
+			default:
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		http.HandleFunc("/api/v1/notifications/read-all", func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodPost {
+				notificationHandlers.MarkAllAsRead(w, r)
+			} else {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		http.HandleFunc("/api/v1/notifications/unread-count", func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodGet {
+				notificationHandlers.GetUnreadCount(w, r)
+			} else {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		http.HandleFunc("/api/v1/notifications/broadcast", func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodPost {
+				notificationHandlers.BroadcastNotification(w, r)
+			} else {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		log.Println("      ✓ POST /api/v1/notifications")
+		log.Println("      ✓ GET /api/v1/notifications")
+		log.Println("      ✓ GET /api/v1/notifications/{id}")
+		log.Println("      ✓ POST /api/v1/notifications/{id}/read")
+		log.Println("      ✓ POST /api/v1/notifications/read-all")
+		log.Println("      ✓ GET /api/v1/notifications/unread-count")
+		log.Println("      ✓ POST /api/v1/notifications/broadcast")
+		log.Println("      ✓ DELETE /api/v1/notifications/{id}")
+	}
+
+	// Video Integration endpoints (Jitsi/Google Meet/Zoom) - only if database available
+	if videoIntegrationHandlers != nil {
+		http.HandleFunc("/api/v1/video/providers", func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodGet {
+				videoIntegrationHandlers.ListProviders(w, r)
+			} else {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		// Note: These routes extend the existing /api/v1/meetings/ routes
+		// They will be registered as separate handlers
+		http.HandleFunc("/api/v1/meetings/video/", func(w http.ResponseWriter, r *http.Request) {
+			// Create video integration for a meeting
+			if r.Method == http.MethodPost {
+				videoIntegrationHandlers.CreateIntegration(w, r)
+			} else {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		http.HandleFunc("/api/v1/meetings/join/", func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodGet {
+				videoIntegrationHandlers.GetJoinLink(w, r)
+			} else {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		http.HandleFunc("/api/v1/meetings/host/", func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodGet {
+				videoIntegrationHandlers.GetHostLink(w, r)
+			} else {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		})
+
+		log.Println("      ✓ GET /api/v1/video/providers")
+		log.Println("      ✓ POST /api/v1/meetings/video/{meeting_id}")
+		log.Println("      ✓ GET /api/v1/meetings/join/{meeting_id}")
+		log.Println("      ✓ GET /api/v1/meetings/host/{meeting_id}")
 	}
 
 	// Adaptive Bitrate (ABR) endpoints (Phase 2B)

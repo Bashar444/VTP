@@ -176,3 +176,120 @@ type AssignmentSubmission struct {
 	CreatedAt    time.Time  `json:"created_at"`
 	UpdatedAt    time.Time  `json:"updated_at"`
 }
+
+// SchoolTerm represents an academic semester/term
+type SchoolTerm struct {
+	ID           string    `db:"id" json:"id"`
+	NameAr       string    `db:"name_ar" json:"name_ar"`
+	NameEn       string    `db:"name_en" json:"name_en"`
+	StartDate    time.Time `db:"start_date" json:"start_date"`
+	EndDate      time.Time `db:"end_date" json:"end_date"`
+	IsActive     bool      `db:"is_active" json:"is_active"`
+	AcademicYear string    `db:"academic_year" json:"academic_year"`
+	CreatedAt    time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt    time.Time `db:"updated_at" json:"updated_at"`
+}
+
+// GradeLevel represents a grade/year level (e.g., 12th grade)
+type GradeLevel struct {
+	ID             string    `db:"id" json:"id"`
+	NameAr         string    `db:"name_ar" json:"name_ar"`
+	NameEn         string    `db:"name_en" json:"name_en"`
+	LevelNumber    int       `db:"level_number" json:"level_number"`
+	EducationStage string    `db:"education_stage" json:"education_stage"` // elementary, middle, high
+	CreatedAt      time.Time `db:"created_at" json:"created_at"`
+}
+
+// ClassSection represents a class section (e.g., 12-A, 12-B)
+type ClassSection struct {
+	ID                string    `db:"id" json:"id"`
+	GradeLevelID      string    `db:"grade_level_id" json:"grade_level_id"`
+	SchoolTermID      string    `db:"school_term_id" json:"school_term_id"`
+	SectionName       string    `db:"section_name" json:"section_name"`
+	HomeroomTeacherID *string   `db:"homeroom_teacher_id" json:"homeroom_teacher_id"`
+	MaxStudents       int       `db:"max_students" json:"max_students"`
+	CreatedAt         time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt         time.Time `db:"updated_at" json:"updated_at"`
+}
+
+// Attendance represents student attendance record
+type Attendance struct {
+	ID             string     `db:"id" json:"id"`
+	StudentID      string     `db:"student_id" json:"student_id"`
+	ClassSectionID string     `db:"class_section_id" json:"class_section_id"`
+	MeetingID      *string    `db:"meeting_id" json:"meeting_id"`
+	SubjectID      *string    `db:"subject_id" json:"subject_id"`
+	Date           time.Time  `db:"date" json:"date"`
+	Status         string     `db:"status" json:"status"` // present, absent, late, excused
+	CheckInTime    *time.Time `db:"check_in_time" json:"check_in_time"`
+	CheckOutTime   *time.Time `db:"check_out_time" json:"check_out_time"`
+	RecordedBy     *string    `db:"recorded_by" json:"recorded_by"`
+	Notes          string     `db:"notes" json:"notes"`
+	CreatedAt      time.Time  `db:"created_at" json:"created_at"`
+	UpdatedAt      time.Time  `db:"updated_at" json:"updated_at"`
+}
+
+// Notification represents a user notification
+type Notification struct {
+	ID             string     `db:"id" json:"id"`
+	UserID         string     `db:"user_id" json:"user_id"`
+	TitleAr        string     `db:"title_ar" json:"title_ar"`
+	TitleEn        string     `db:"title_en" json:"title_en"`
+	MessageAr      string     `db:"message_ar" json:"message_ar"`
+	MessageEn      string     `db:"message_en" json:"message_en"`
+	Type           string     `db:"type" json:"type"`       // info, warning, success, error, assignment, meeting, grade, attendance
+	Channel        string     `db:"channel" json:"channel"` // in_app, email, sms, push
+	ReferenceType  *string    `db:"reference_type" json:"reference_type"`
+	ReferenceID    *string    `db:"reference_id" json:"reference_id"`
+	IsRead         bool       `db:"is_read" json:"is_read"`
+	ReadAt         *time.Time `db:"read_at" json:"read_at"`
+	SentAt         *time.Time `db:"sent_at" json:"sent_at"`
+	DeliveryStatus string     `db:"delivery_status" json:"delivery_status"` // pending, sent, delivered, failed
+	CreatedAt      time.Time  `db:"created_at" json:"created_at"`
+}
+
+// MeetingIntegration represents external meeting provider details
+type MeetingIntegration struct {
+	ID                string    `db:"id" json:"id"`
+	MeetingID         string    `db:"meeting_id" json:"meeting_id"`
+	Provider          string    `db:"provider" json:"provider"` // google_meet, zoom, jitsi, internal
+	ExternalMeetingID string    `db:"external_meeting_id" json:"external_meeting_id"`
+	MeetingLink       string    `db:"meeting_link" json:"meeting_link"`
+	HostLink          string    `db:"host_link" json:"host_link"`
+	Password          string    `db:"password" json:"password"`
+	Settings          string    `db:"settings" json:"settings"` // JSON
+	CreatedAt         time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt         time.Time `db:"updated_at" json:"updated_at"`
+}
+
+// StudentGrade represents a grade record for a student
+type StudentGrade struct {
+	ID           string    `db:"id" json:"id"`
+	StudentID    string    `db:"student_id" json:"student_id"`
+	SubjectID    string    `db:"subject_id" json:"subject_id"`
+	SchoolTermID string    `db:"school_term_id" json:"school_term_id"`
+	AssignmentID *string   `db:"assignment_id" json:"assignment_id"`
+	GradeType    string    `db:"grade_type" json:"grade_type"` // exam, quiz, homework, participation, project, final
+	MaxPoints    int       `db:"max_points" json:"max_points"`
+	PointsEarned int       `db:"points_earned" json:"points_earned"`
+	Percentage   float64   `db:"percentage" json:"percentage"`
+	LetterGrade  string    `db:"letter_grade" json:"letter_grade"`
+	Notes        string    `db:"notes" json:"notes"`
+	GradedBy     *string   `db:"graded_by" json:"graded_by"`
+	CreatedAt    time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt    time.Time `db:"updated_at" json:"updated_at"`
+}
+
+// ClassSchedule represents a timetable entry
+type ClassSchedule struct {
+	ID             string    `db:"id" json:"id"`
+	ClassSectionID string    `db:"class_section_id" json:"class_section_id"`
+	SubjectID      string    `db:"subject_id" json:"subject_id"`
+	InstructorID   string    `db:"instructor_id" json:"instructor_id"`
+	DayOfWeek      int       `db:"day_of_week" json:"day_of_week"` // 0=Sunday
+	StartTime      string    `db:"start_time" json:"start_time"`   // HH:MM
+	EndTime        string    `db:"end_time" json:"end_time"`       // HH:MM
+	RoomName       string    `db:"room_name" json:"room_name"`
+	SchoolTermID   string    `db:"school_term_id" json:"school_term_id"`
+	CreatedAt      time.Time `db:"created_at" json:"created_at"`
+}
