@@ -16,7 +16,7 @@ export interface RegisterRequest {
   full_name: string;
   email: string;
   password: string;
-  role: 'student' | 'instructor' | 'admin';
+  role: 'student' | 'teacher' | 'admin';
   phone?: string;
 }
 
@@ -25,7 +25,7 @@ export interface User {
   email: string;
   full_name: string;
   phone?: string;
-  role: 'student' | 'instructor' | 'admin';
+  role: 'student' | 'teacher' | 'instructor' | 'admin';
   profile_picture_url?: string;
   created_at?: string;
   updated_at?: string;

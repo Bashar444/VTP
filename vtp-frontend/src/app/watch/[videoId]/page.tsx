@@ -148,28 +148,28 @@ export default function VideoPlaybackPage() {
               <div className="flex flex-wrap gap-2">
                 <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
                   <Share2 className="w-4 h-4" />
-                  Share
+                  مشاركة
                 </button>
                 <button className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors">
                   <Flag className="w-4 h-4" />
-                  Report Issue
+                  الإبلاغ عن مشكلة
                 </button>
               </div>
             </div>
 
             {/* Description & Details */}
             <div className="bg-gray-800 rounded-lg p-6">
-              <h2 className="text-xl font-bold text-white mb-4">About This Video</h2>
+              <h2 className="text-xl font-bold text-white mb-4">عن هذا الفيديو</h2>
               <p className="text-gray-400 leading-relaxed">{video.description}</p>
 
               {/* Lecture & Course Info */}
               <div className="mt-6 grid grid-cols-2 gap-4">
                 <div className="bg-gray-700 rounded-lg p-4">
-                  <p className="text-sm text-gray-400 mb-1">Lecture ID</p>
+                  <p className="text-sm text-gray-400 mb-1">رقم المحاضرة</p>
                   <p className="text-white font-semibold">{video.lectureId}</p>
                 </div>
                 <div className="bg-gray-700 rounded-lg p-4">
-                  <p className="text-sm text-gray-400 mb-1">Course ID</p>
+                  <p className="text-sm text-gray-400 mb-1">رقم المادة</p>
                   <p className="text-white font-semibold">{video.courseId}</p>
                 </div>
               </div>

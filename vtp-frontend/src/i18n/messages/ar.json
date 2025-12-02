@@ -61,6 +61,7 @@
   "register.role": "الدور",
   "register.role.student": "طالب",
   "register.role.instructor": "معلّم",
+  "register.role.teacher": "معلّم",
   "register.submit": "إنشاء الحساب",
   "register.submitting": "جارٍ إنشاء الحساب…",
   "register.error": "فشل إنشاء الحساب. حاول مرة أخرى.",

@@ -6,17 +6,17 @@ import { LoginForm } from '@/components/auth/LoginForm';
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div dir="rtl" className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
         <div>
           <h1 className="text-center text-3xl font-extrabold text-gray-900">
-            VTP
+            منصة التعليم
           </h1>
           <h2 className="mt-2 text-center text-xl font-bold text-gray-900">
-            Sign in to your account
+            تسجيل الدخول إلى حسابك
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Educational platform for Syrian students
+            منصة تعليمية للطلاب السوريين
           </p>
         </div>
 
@@ -30,7 +30,7 @@ export default function LoginPage() {
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-white text-gray-500">
-                  Don't have an account?
+                  ليس لديك حساب؟
                 </span>
               </div>
             </div>
@@ -40,7 +40,7 @@ export default function LoginPage() {
                 href="/register"
                 className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
               >
-                Create account
+                إنشاء حساب جديد
               </Link>
             </div>
           </div>
@@ -50,7 +50,7 @@ export default function LoginPage() {
               href="/forgot-password"
               className="text-sm font-medium text-blue-600 hover:text-blue-500"
             >
-              Forgot your password?
+              نسيت كلمة المرور؟
             </Link>
           </div>
         </div>

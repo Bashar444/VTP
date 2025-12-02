@@ -25,7 +25,7 @@ export default function MyCoursesPage() {
         const data = await CourseService.getEnrolledCourses();
         setEnrollments(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load courses');
+        setError(err instanceof Error ? err.message : 'فشل في تحميل الدورات');
       } finally {
         setLoading(false);
       }
@@ -38,12 +38,12 @@ export default function MyCoursesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-24 pb-12">
+      <div dir="rtl" className="min-h-screen bg-gray-50 pt-24 pb-12">
         <div className="max-w-7xl mx-auto px-4">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">My Courses</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-8">دوراتي</h1>
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading your courses...</p>
+            <p className="mt-4 text-gray-600">جاري تحميل دوراتك...</p>
           </div>
         </div>
       </div>
@@ -51,9 +51,9 @@ export default function MyCoursesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-24 pb-12">
+    <div dir="rtl" className="min-h-screen bg-gray-50 pt-24 pb-12">
       <div className="max-w-7xl mx-auto px-4">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">My Courses</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">دوراتي</h1>
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
@@ -64,13 +64,13 @@ export default function MyCoursesPage() {
         {enrollments.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-8 text-center">
             <p className="text-gray-600 mb-4">
-              You haven't enrolled in any courses yet.
+              لم تسجل في أي دورة بعد.
             </p>
             <Link
               href="/courses"
               className="inline-block bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700"
             >
-              Browse Courses
+              تصفح الدورات
             </Link>
           </div>
         ) : (
@@ -78,16 +78,16 @@ export default function MyCoursesPage() {
             {enrollments.map((enrollment: any) => (
               <div key={enrollment.id} className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Course {enrollment.course_id}
+                  {enrollment.course?.title || `الدورة ${enrollment.course_id}`}
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">
-                  Enrolled: {new Date(enrollment.enrollment_date).toLocaleDateString()}
+                  تاريخ التسجيل: {new Date(enrollment.enrollment_date).toLocaleDateString('ar-SA')}
                 </p>
                 <Link
                   href={`/courses/${enrollment.course_id}`}
                   className="text-indigo-600 hover:text-indigo-700 font-medium"
                 >
-                  View Course →
+                  عرض الدورة ←
                 </Link>
               </div>
             ))}

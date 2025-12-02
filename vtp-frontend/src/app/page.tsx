@@ -2,28 +2,56 @@
 export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { useFeaturedCourses } from '@/hooks/useFeaturedCourses';
-import { useTranslations } from 'next-intl';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Home() {
   const { data: courses = [], isLoading: loading, error } = useFeaturedCourses(4);
-  const t = useTranslations();
+  const { isAuthenticated, user } = useAuth();
+
   return (
-    <main className="max-w-7xl mx-auto px-4 py-10">
+    <main className="max-w-7xl mx-auto px-4 py-10" dir="rtl">
       <section className="mb-10 text-center">
-        <h1 className="text-4xl font-bold text-gray-900 mb-3">{t('home.title')}</h1>
-        <p className="text-lg text-gray-600 mb-6">{t('home.subtitle')}</p>
+        <h1 className="text-4xl font-bold text-gray-900 mb-3">منصة تعليم البث بالفيديو</h1>
+        <p className="text-lg text-gray-600 mb-6">تمكين الطلاب بالتدريس التفاعلي والبث المباشر.</p>
         <div className="flex flex-wrap gap-3 justify-center">
-          <Link href="/courses" className="px-5 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-500 text-sm font-medium">{t('home.browseCourses')}</Link>
-          <Link href="/dashboard" className="px-5 py-2 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-medium">{t('home.dashboard')}</Link>
-          <Link href="/stream/demo" className="px-5 py-2 rounded-md bg-green-600 text-white hover:bg-green-500 text-sm font-medium">{t('home.joinStream')}</Link>
-          <Link href="/login" className="px-5 py-2 rounded-md bg-gray-800 text-white hover:bg-gray-700 text-sm font-medium">{t('home.login')}</Link>
+          <Link href="/courses" className="px-5 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-500 text-sm font-medium">
+            استعراض المواد
+          </Link>
+          {isAuthenticated ? (
+            <>
+              {user?.role === 'admin' && (
+                <Link href="/admin/dashboard" className="px-5 py-2 rounded-md bg-purple-600 text-white hover:bg-purple-500 text-sm font-medium">
+                  لوحة تحكم المدير
+                </Link>
+              )}
+              {(user?.role === 'teacher' || user?.role === 'instructor') && (
+                <Link href="/instructor/courses" className="px-5 py-2 rounded-md bg-green-600 text-white hover:bg-green-500 text-sm font-medium">
+                  لوحة تحكم المعلم
+                </Link>
+              )}
+              {user?.role === 'student' && (
+                <Link href="/student/dashboard" className="px-5 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-500 text-sm font-medium">
+                  لوحة تحكم الطالب
+                </Link>
+              )}
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="px-5 py-2 rounded-md bg-gray-800 text-white hover:bg-gray-700 text-sm font-medium">
+                تسجيل الدخول
+              </Link>
+              <Link href="/register" className="px-5 py-2 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-medium">
+                إنشاء حساب
+              </Link>
+            </>
+          )}
         </div>
       </section>
 
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-semibold text-gray-900">{t('home.featured')}</h2>
-          <Link href="/courses" className="text-sm text-indigo-600 hover:underline">{t('home.viewAll')}</Link>
+          <h2 className="text-2xl font-semibold text-gray-900">المواد المتاحة</h2>
+          <Link href="/courses" className="text-sm text-indigo-600 hover:underline">عرض الجميع</Link>
         </div>
         {loading && (
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
@@ -33,10 +61,12 @@ export default function Home() {
           </div>
         )}
         {!loading && error && (
-          <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded text-sm">{t('errors.network')}</div>
+          <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded text-sm">
+            خطأ في تحميل المواد. تأكد من اتصال الخادم.
+          </div>
         )}
         {!loading && !error && courses.length === 0 && (
-          <p className="text-sm text-gray-600">{t('home.noFeatured')}</p>
+          <p className="text-sm text-gray-600">لا توجد مواد متاحة حالياً.</p>
         )}
         {!loading && !error && courses.length > 0 && (
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
@@ -56,8 +86,8 @@ export default function Home() {
                 <h3 className="text-sm font-semibold text-gray-900 mb-1 group-hover:text-indigo-600 line-clamp-2">{c.title}</h3>
                 <p className="text-xs text-gray-600 line-clamp-3 mb-2">{c.description}</p>
                 <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>{c.rating ? `★ ${c.rating.toFixed(1)}` : t('course.new')}</span>
-                  <span>{c.studentCount ? `${c.studentCount} ${t('course.learners')}` : ''}</span>
+                  <span>{c.rating ? `★ ${c.rating.toFixed(1)}` : 'جديد'}</span>
+                  <span>{c.studentCount ? `${c.studentCount} متعلم` : ''}</span>
                 </div>
               </Link>
             ))}

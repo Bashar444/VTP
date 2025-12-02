@@ -2,8 +2,6 @@
 # Docker Compose للتشغيل المحلي
 # محسّن لجهاز: 16GB RAM, 4 CPU cores
 
-version: '3.8'
-
 services:
   # ═══════════════════════════════════════════════════════════
   # قاعدة البيانات PostgreSQL
@@ -76,6 +74,7 @@ services:
       JWT_REFRESH_EXPIRY_HOURS: "168"
       JITSI_SERVER_URL: "https://meet.jit.si"
       NODE_ENV: production
+      CORS_ORIGINS: "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3001"
     ports:
       - "8080:8080"
     depends_on:

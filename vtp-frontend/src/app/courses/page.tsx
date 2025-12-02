@@ -97,13 +97,13 @@ export default function CoursesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 pt-24 pb-12">
+    <div className="min-h-screen bg-gray-900 pt-24 pb-12" dir="rtl">
       <div className="container mx-auto px-4">
         {/* Page Header */}
         <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-white mb-2">Explore Courses</h1>
-            <p className="text-gray-400">{filteredCourses.length} courses available</p>
+            <h1 className="text-4xl font-bold text-white mb-2">استكشف المواد</h1>
+            <p className="text-gray-400">{filteredCourses.length} مادة متاحة</p>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -111,13 +111,13 @@ export default function CoursesPage() {
               disabled={refreshing || isLoading}
               className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium"
             >
-              {refreshing ? 'Refreshing…' : 'Refresh'}
+              {refreshing ? 'جاري التحديث...' : 'تحديث'}
             </button>
             <button
               onClick={() => setFilters({})}
               className="px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium"
             >
-              Reset Filters
+              إعادة تعيين
             </button>
           </div>
         </div>
@@ -156,12 +156,12 @@ export default function CoursesPage() {
               />
             ) : (
               <div className="text-center py-12">
-                <p className="text-gray-400 text-lg mb-4">No courses found</p>
+                <p className="text-gray-400 text-lg mb-4">لا توجد مواد</p>
                 <button
                   onClick={() => setFilters({})}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                 >
-                  Clear Filters
+                  مسح الفلاتر
                 </button>
               </div>
             )}

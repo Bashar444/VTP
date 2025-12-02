@@ -17,40 +17,48 @@ export function NavBar() {
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <Link href="/" className="text-2xl font-bold text-indigo-600">
-            VTP
+            منصة التعليم
           </Link>
           {user && (
             <nav className="flex items-center gap-6">
-              {/* Student/Instructor Nav */}
-              {(user.role === 'student' || user.role === 'instructor') && (
+              {/* Student Nav */}
+              {user.role === 'student' && (
                 <>
+                  <Link href="/student/dashboard" className="text-gray-700 hover:text-indigo-600">
+                    لوحة التحكم
+                  </Link>
                   <Link href="/courses" className="text-gray-700 hover:text-indigo-600">
-                    Courses
+                    المواد
                   </Link>
                   <Link href="/my-courses" className="text-gray-700 hover:text-indigo-600">
-                    My Courses
+                    موادي
                   </Link>
                 </>
               )}
-              
-              {/* Instructor Only */}
-              {user.role === 'instructor' && (
-                <Link href="/instructor/courses" className="text-gray-700 hover:text-indigo-600">
-                  Manage Courses
-                </Link>
+
+              {/* Teacher/Instructor Nav */}
+              {(user.role === 'teacher' || user.role === 'instructor') && (
+                <>
+                  <Link href="/instructor/courses" className="text-gray-700 hover:text-indigo-600">
+                    لوحة التحكم
+                  </Link>
+                  <Link href="/courses" className="text-gray-700 hover:text-indigo-600">
+                    المواد
+                  </Link>
+                </>
               )}
               
               {/* Admin Only */}
               {user.role === 'admin' && (
                 <>
+                  <Link href="/admin/dashboard" className="text-gray-700 hover:text-indigo-600">
+                    لوحة التحكم
+                  </Link>
                   <Link href="/admin/users" className="text-gray-700 hover:text-indigo-600">
-                    Users
+                    المستخدمون
                   </Link>
                   <Link href="/admin/courses" className="text-gray-700 hover:text-indigo-600">
-                    All Courses
-                  </Link>
-                  <Link href="/admin/dashboard" className="text-gray-700 hover:text-indigo-600">
-                    Statistics
+                    المواد
                   </Link>
                 </>
               )}
@@ -68,19 +76,19 @@ export function NavBar() {
                 onClick={handleLogout}
                 className="text-gray-600 hover:text-red-600"
               >
-                Logout
+                تسجيل الخروج
               </button>
             </>
           ) : (
             <>
               <Link href="/login" className="text-indigo-600 hover:underline">
-                Login
+                دخول
               </Link>
               <Link
                 href="/register"
                 className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
               >
-                Sign Up
+                تسجيل
               </Link>
             </>
           )}

@@ -2,19 +2,19 @@
 
 import { FormEvent, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { RegisterFormData, registerSchema } from '@/utils/validation.schemas';
-import { useTranslations } from 'next-intl';
+import { registerSchema } from '@/utils/validation.schemas';
+import { useRouter } from 'next/navigation';
 
 export const RegisterForm = () => {
   const { register, isLoading } = useAuth();
-  const t = useTranslations();
+  const router = useRouter();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'student' as const,
+    role: 'student' as 'student' | 'teacher' | 'admin',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -26,7 +26,6 @@ export const RegisterForm = () => {
       ...prev,
       [name]: value,
     }));
-    // Clear error for this field
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
     }
@@ -38,13 +37,22 @@ export const RegisterForm = () => {
 
     try {
       const validatedData = registerSchema.parse(formData);
-      await register(
+      const result = await register(
         validatedData.firstName,
         validatedData.lastName,
         validatedData.email,
         validatedData.password,
         validatedData.role
       );
+      if (result?.user) {
+        if (result.user.role === 'admin') {
+          router.push('/admin/dashboard');
+        } else if (result.user.role === 'teacher' || result.user.role === 'instructor') {
+          router.push('/instructor/courses');
+        } else {
+          router.push('/student/dashboard');
+        }
+      }
     } catch (error: any) {
       if (error.errors) {
         const newErrors: Record<string, string> = {};
@@ -53,17 +61,17 @@ export const RegisterForm = () => {
         });
         setErrors(newErrors);
       } else {
-        setErrors({ submit: 'Registration failed. Please try again.' });
+        setErrors({ submit: 'فشل إنشاء الحساب. حاول مرة أخرى.' });
       }
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4" dir="rtl">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-            {t('register.firstName')}
+            الاسم الأول
           </label>
           <input
             id="firstName"
@@ -71,6 +79,7 @@ export const RegisterForm = () => {
             type="text"
             value={formData.firstName}
             onChange={handleChange}
+            placeholder="أدخل اسمك الأول"
             className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
               errors.firstName ? 'border-red-500' : 'border-gray-300'
             }`}
@@ -83,7 +92,7 @@ export const RegisterForm = () => {
 
         <div>
           <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-            {t('register.lastName')}
+            اسم العائلة
           </label>
           <input
             id="lastName"
@@ -91,6 +100,7 @@ export const RegisterForm = () => {
             type="text"
             value={formData.lastName}
             onChange={handleChange}
+            placeholder="أدخل اسم العائلة"
             className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
               errors.lastName ? 'border-red-500' : 'border-gray-300'
             }`}
@@ -104,7 +114,7 @@ export const RegisterForm = () => {
 
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-          {t('register.email')}
+          البريد الإلكتروني
         </label>
         <input
           id="email"
@@ -112,6 +122,7 @@ export const RegisterForm = () => {
           type="email"
           value={formData.email}
           onChange={handleChange}
+          placeholder="أدخل بريدك الإلكتروني"
           className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
             errors.email ? 'border-red-500' : 'border-gray-300'
           }`}
@@ -122,7 +133,7 @@ export const RegisterForm = () => {
 
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-          {t('register.password')}
+          كلمة المرور
         </label>
         <input
           id="password"
@@ -130,6 +141,7 @@ export const RegisterForm = () => {
           type="password"
           value={formData.password}
           onChange={handleChange}
+          placeholder="أدخل كلمة المرور"
           className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
             errors.password ? 'border-red-500' : 'border-gray-300'
           }`}
@@ -139,16 +151,13 @@ export const RegisterForm = () => {
           <p className="mt-1 text-sm text-red-600">{errors.password}</p>
         )}
         <p className="mt-2 text-xs text-gray-500">
-          At least 8 characters, 1 uppercase letter, 1 number, 1 special character
+          على الأقل 8 أحرف، حرف كبير واحد، رقم واحد، رمز خاص واحد
         </p>
       </div>
 
       <div>
-        <label
-          htmlFor="confirmPassword"
-          className="block text-sm font-medium text-gray-700"
-        >
-          {t('register.confirmPassword')}
+        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+          تأكيد كلمة المرور
         </label>
         <input
           id="confirmPassword"
@@ -156,6 +165,7 @@ export const RegisterForm = () => {
           type="password"
           value={formData.confirmPassword}
           onChange={handleChange}
+          placeholder="أعد إدخال كلمة المرور"
           className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
             errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
           }`}
@@ -168,7 +178,7 @@ export const RegisterForm = () => {
 
       <div>
         <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-          {t('register.role')}
+          نوع الحساب
         </label>
         <select
           id="role"
@@ -180,14 +190,14 @@ export const RegisterForm = () => {
           }`}
           disabled={isLoading}
         >
-          <option value="student">{t('register.role.student')}</option>
-          <option value="instructor">{t('register.role.instructor')}</option>
+          <option value="student">طالب</option>
+          <option value="teacher">معلّم</option>
         </select>
         {errors.role && <p className="mt-1 text-sm text-red-600">{errors.role}</p>}
       </div>
 
       {errors.submit && (
-        <div className="rounded-md bg-red-50 p-4">
+        <div className="rounded-md bg-red-50 p-4 border border-red-200">
           <p className="text-sm text-red-800">{errors.submit}</p>
         </div>
       )}
@@ -197,7 +207,7 @@ export const RegisterForm = () => {
         disabled={isLoading}
         className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {isLoading ? t('register.submitting') : t('register.submit')}
+        {isLoading ? 'جارٍ إنشاء الحساب...' : 'إنشاء الحساب'}
       </button>
     </form>
   );

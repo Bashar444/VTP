@@ -13,7 +13,18 @@ interface AuthState {
   clearAuth: () => void;
   setLoading: (loading: boolean) => void;
   setUser: (user: User) => void;
+  initFromStorage: () => void;
 }
+
+// Helper to safely access localStorage
+const getFromStorage = (key: string): string | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
@@ -21,6 +32,29 @@ export const useAuthStore = create<AuthState>((set) => ({
   refreshToken: null,
   isAuthenticated: false,
   isLoading: false,
+
+  initFromStorage: () => {
+    const token = getFromStorage('authToken');
+    const refreshToken = getFromStorage('refreshToken');
+    const userStr = getFromStorage('user');
+    
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        set({
+          user,
+          token,
+          refreshToken: refreshToken || null,
+          isAuthenticated: true,
+        });
+      } catch {
+        // Invalid stored data, clear it
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+      }
+    }
+  },
 
   setAuth: (user: User, token: string, refreshToken: string) => {
     set({
@@ -30,9 +64,11 @@ export const useAuthStore = create<AuthState>((set) => ({
       isAuthenticated: true,
     });
     // Persist to localStorage
-    localStorage.setItem('authToken', token);
-    localStorage.setItem('refreshToken', refreshToken);
-    localStorage.setItem('user', JSON.stringify(user));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('user', JSON.stringify(user));
+    }
   },
 
   clearAuth: () => {
@@ -42,9 +78,11 @@ export const useAuthStore = create<AuthState>((set) => ({
       refreshToken: null,
       isAuthenticated: false,
     });
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+    }
   },
 
   setLoading: (loading: boolean) => set({ isLoading: loading }),

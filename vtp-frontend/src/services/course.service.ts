@@ -79,6 +79,31 @@ export interface CourseStats {
   averageCompletion: number;
 }
 
+// Transform backend course to frontend Course interface
+function transformCourse(backendCourse: any): Course {
+  return {
+    id: backendCourse.id,
+    title: backendCourse.name || backendCourse.title || '',
+    description: backendCourse.description || '',
+    instructorId: backendCourse.instructor_id || backendCourse.instructorId || '',
+    instructorName: backendCourse.instructor_name || backendCourse.instructorName || '',
+    thumbnail: backendCourse.thumbnail || '',
+    coverImage: backendCourse.cover_image || backendCourse.coverImage || '',
+    category: backendCourse.department || backendCourse.category || '',
+    level: backendCourse.level || 'beginner',
+    status: backendCourse.status || 'published',
+    price: backendCourse.price || 0,
+    isFree: backendCourse.is_free || backendCourse.price === 0,
+    rating: backendCourse.rating || 0,
+    reviewCount: backendCourse.review_count || backendCourse.reviewCount || 0,
+    studentCount: backendCourse.enrolled_count || backendCourse.student_count || backendCourse.studentCount || 0,
+    duration: backendCourse.duration || 0,
+    lectureCount: backendCourse.lecture_count || backendCourse.lectureCount || 0,
+    createdAt: backendCourse.created_at ? new Date(backendCourse.created_at) : new Date(),
+    updatedAt: backendCourse.updated_at ? new Date(backendCourse.updated_at) : new Date(),
+  };
+}
+
 class CourseServiceImpl {
   /**
    * Get all courses with optional filters
@@ -94,17 +119,38 @@ class CourseServiceImpl {
     const response = await api.get('/courses', {
       params: filters,
     });
-    return response.data;
+    // Handle both array and object responses
+    const data = response.data;
+    if (Array.isArray(data)) {
+      return {
+        courses: data.map(transformCourse),
+        total: data.length
+      };
+    }
+    return {
+      courses: (data.courses || []).map(transformCourse),
+      total: data.total || data.courses?.length || 0
+    };
   }
 
   /**
    * Get featured courses
    */
   async getFeaturedCourses(limit: number = 6): Promise<Course[]> {
-    const response = await api.get('/courses/featured', {
-      params: { limit },
-    });
-    return response.data;
+    try {
+      const response = await api.get('/courses/featured', {
+        params: { limit },
+      });
+      const data = response.data;
+      if (Array.isArray(data)) {
+        return data.map(transformCourse);
+      }
+      return (data.courses || []).map(transformCourse);
+    } catch (error) {
+      // Fallback to regular courses if featured endpoint doesn't exist
+      const result = await this.getCourses({ limit });
+      return result.courses.slice(0, limit);
+    }
   }
 
   /**
@@ -112,7 +158,7 @@ class CourseServiceImpl {
    */
   async getCourseById(courseId: string): Promise<Course> {
     const response = await api.get(`/courses/${courseId}`);
-    return response.data;
+    return transformCourse(response.data);
   }
 
   /**

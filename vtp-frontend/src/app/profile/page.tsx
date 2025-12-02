@@ -16,68 +16,77 @@ export default function ProfilePage() {
 
   if (!user) return null;
 
-  return (
-    <div className="min-h-screen bg-gray-50 pt-24 pb-12">
-      <div className="max-w-3xl mx-auto px-4">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">My Profile</h1>
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'student': return 'طالب';
+      case 'teacher': return 'مدرّس';
+      case 'admin': return 'مدير';
+      default: return role;
+    }
+  };
 
-        <div className="bg-white rounded-lg shadow p-6 space-y-6">
+  return (
+    <div className="min-h-screen bg-gray-900 pt-24 pb-12" dir="rtl">
+      <div className="max-w-3xl mx-auto px-4">
+        <h1 className="text-3xl font-bold text-white mb-8">الملف الشخصي</h1>
+
+        <div className="bg-gray-800 rounded-lg shadow p-6 space-y-6">
           {/* Profile Info */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Full Name
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              الاسم الكامل
             </label>
             <input
               type="text"
               value={user.full_name}
               disabled
-              className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50"
+              className="w-full px-4 py-2 border border-gray-600 rounded-md bg-gray-700 text-white"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              البريد الإلكتروني
             </label>
             <input
               type="email"
               value={user.email}
               disabled
-              className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50"
+              className="w-full px-4 py-2 border border-gray-600 rounded-md bg-gray-700 text-white"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Role
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              الدور
             </label>
             <input
               type="text"
-              value={user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+              value={getRoleLabel(user.role)}
               disabled
-              className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50"
+              className="w-full px-4 py-2 border border-gray-600 rounded-md bg-gray-700 text-white"
             />
           </div>
 
           {user.phone && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Phone
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                رقم الهاتف
               </label>
               <input
                 type="text"
                 value={user.phone}
                 disabled
-                className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50"
+                className="w-full px-4 py-2 border border-gray-600 rounded-md bg-gray-700 text-white"
               />
             </div>
           )}
 
           {/* Change Password */}
-          <div className="pt-4 border-t">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Change Password</h2>
-            <button className="text-indigo-600 hover:text-indigo-700 font-medium">
-              Update Password
+          <div className="pt-4 border-t border-gray-600">
+            <h2 className="text-lg font-semibold text-white mb-4">تغيير كلمة المرور</h2>
+            <button className="text-blue-400 hover:text-blue-300 font-medium">
+              تحديث كلمة المرور
             </button>
           </div>
         </div>

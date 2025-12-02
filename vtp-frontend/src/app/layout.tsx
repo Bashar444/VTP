@@ -9,8 +9,8 @@ export const dynamicParams = true;
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: 'VTP - Video Teaching Platform',
-  description: 'Advanced educational video platform for Syrian students',
+  title: 'منصة التعليم - المنصة التعليمية للطلاب السوريين',
+  description: 'منصة تعليمية متقدمة بالفيديو للطلاب السوريين',
   icons: { icon: '/favicon.ico' },
 };
 

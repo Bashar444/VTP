@@ -27,7 +27,7 @@ export const useAuth = () => {
       lastName: string,
       email: string,
       password: string,
-      role: 'student' | 'instructor' | 'admin'
+      role: 'student' | 'teacher' | 'admin'
     ) => {
       auth.setLoading(true);
       try {

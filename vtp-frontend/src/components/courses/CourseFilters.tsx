@@ -27,14 +27,27 @@ export const CourseFilters: React.FC<CourseFiltersProps> = ({
   const [filters, setFilters] = useState<CourseFilterState>({});
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  const categories = ['Programming', 'Design', 'Business', 'Science', 'Language', 'Health'];
-  const levels = ['Beginner', 'Intermediate', 'Advanced'];
+  // المواد الدراسية باللغة العربية
+  const categories = [
+    { key: 'math', label: 'الرياضيات' },
+    { key: 'physics', label: 'الفيزياء' },
+    { key: 'chemistry', label: 'الكيمياء' },
+    { key: 'biology', label: 'العلوم' },
+    { key: 'arabic', label: 'اللغة العربية' },
+    { key: 'english', label: 'اللغة الإنجليزية' },
+    { key: 'history', label: 'التاريخ' },
+    { key: 'geography', label: 'الجغرافيا' },
+    { key: 'philosophy', label: 'الفلسفة' },
+  ];
+  const levels = [
+    { key: 'beginner', label: 'مبتدئ' },
+    { key: 'intermediate', label: 'متوسط' },
+    { key: 'advanced', label: 'متقدم' },
+  ];
   const sortOptions = [
-    { value: 'newest', labelKey: 'filters.sort.newest' },
-    { value: 'popular', labelKey: 'filters.sort.popular' },
-    { value: 'highest-rated', labelKey: 'filters.sort.highest-rated' },
-    { value: 'price-low', labelKey: 'filters.sort.price-low' },
-    { value: 'price-high', labelKey: 'filters.sort.price-high' },
+    { value: 'newest', label: 'الأحدث' },
+    { value: 'popular', label: 'الأكثر شيوعاً' },
+    { value: 'highest-rated', label: 'الأعلى تقييماً' },
   ];
 
   const updateFilters = (partial: Partial<CourseFilterState>) => {
@@ -63,55 +76,55 @@ export const CourseFilters: React.FC<CourseFiltersProps> = ({
   };
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn('space-y-4', className)} dir="rtl">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
         <input
           type="text"
-          placeholder={t('filters.searchPlaceholder')}
+          placeholder="ابحث عن المواد..."
           value={filters.search || ''}
           onChange={e => handleSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+          className="w-full pr-10 pl-4 py-2.5 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
         />
       </div>
 
       <div className="hidden lg:block space-y-4">
         <div>
-          <h3 className="font-semibold text-white mb-3">{t('filters.category')}</h3>
+          <h3 className="font-semibold text-white mb-3">المادة</h3>
           <div className="space-y-2">
-            {categories.map(category => (
-              <label key={category} className="flex items-center gap-2 cursor-pointer">
+            {categories.map(cat => (
+              <label key={cat.key} className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={filters.category === category.toLowerCase()}
-                  onChange={() => handleCategoryChange(category.toLowerCase())}
+                  checked={filters.category === cat.key}
+                  onChange={() => handleCategoryChange(cat.key)}
                   className="w-4 h-4 rounded border-gray-500 bg-gray-800 text-blue-600"
                 />
-                <span className="text-gray-300 hover:text-white">{category}</span>
+                <span className="text-gray-300 hover:text-white">{cat.label}</span>
               </label>
             ))}
           </div>
         </div>
 
         <div>
-          <h3 className="font-semibold text-white mb-3">{t('filters.level')}</h3>
+          <h3 className="font-semibold text-white mb-3">المستوى</h3>
           <div className="space-y-2">
-            {levels.map(level => (
-              <label key={level} className="flex items-center gap-2 cursor-pointer">
+            {levels.map(lvl => (
+              <label key={lvl.key} className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={filters.level === level.toLowerCase()}
-                  onChange={() => handleLevelChange(level.toLowerCase())}
+                  checked={filters.level === lvl.key}
+                  onChange={() => handleLevelChange(lvl.key)}
                   className="w-4 h-4 rounded border-gray-500 bg-gray-800 text-blue-600"
                 />
-                <span className="text-gray-300 hover:text-white">{level}</span>
+                <span className="text-gray-300 hover:text-white">{lvl.label}</span>
               </label>
             ))}
           </div>
         </div>
 
         <div>
-          <h3 className="font-semibold text-white mb-3">{t('filters.sortBy')}</h3>
+          <h3 className="font-semibold text-white mb-3">ترتيب حسب</h3>
           <select
             value={filters.sortBy || 'newest'}
             onChange={e => handleSortChange(e.target.value)}
@@ -119,7 +132,7 @@ export const CourseFilters: React.FC<CourseFiltersProps> = ({
           >
             {sortOptions.map(option => (
               <option key={option.value} value={option.value}>
-                {t(option.labelKey)}
+                {option.label}
               </option>
             ))}
           </select>
@@ -130,7 +143,7 @@ export const CourseFilters: React.FC<CourseFiltersProps> = ({
             onClick={clearFilters}
             className="w-full py-2 px-4 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
           >
-            {t('filters.clear')}
+            مسح الفلاتر
           </button>
         )}
       </div>
@@ -141,50 +154,50 @@ export const CourseFilters: React.FC<CourseFiltersProps> = ({
           className="w-full py-2.5 px-4 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
         >
           <Filter className="w-5 h-5" />
-          {t('filters.open')}
+          فلاتر البحث
         </button>
         {showMobileFilters && (
           <div className="mt-3 p-4 bg-gray-800 rounded-lg space-y-4">
             <div>
-              <h3 className="font-semibold text-white mb-2">{t('filters.category')}</h3>
+              <h3 className="font-semibold text-white mb-2">المادة</h3>
               <div className="grid grid-cols-2 gap-2">
-                {categories.map(category => (
+                {categories.map(cat => (
                   <button
-                    key={category}
-                    onClick={() => handleCategoryChange(category.toLowerCase())}
+                    key={cat.key}
+                    onClick={() => handleCategoryChange(cat.key)}
                     className={cn(
                       'py-2 px-3 rounded-lg text-sm font-medium transition-colors',
-                      filters.category === category.toLowerCase()
+                      filters.category === cat.key
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-700 text-gray-300'
                     )}
                   >
-                    {category}
+                    {cat.label}
                   </button>
                 ))}
               </div>
             </div>
             <div>
-              <h3 className="font-semibold text-white mb-2">{t('filters.level')}</h3>
+              <h3 className="font-semibold text-white mb-2">المستوى</h3>
               <div className="grid grid-cols-3 gap-2">
-                {levels.map(level => (
+                {levels.map(lvl => (
                   <button
-                    key={level}
-                    onClick={() => handleLevelChange(level.toLowerCase())}
+                    key={lvl.key}
+                    onClick={() => handleLevelChange(lvl.key)}
                     className={cn(
                       'py-2 px-3 rounded-lg text-sm font-medium transition-colors',
-                      filters.level === level.toLowerCase()
+                      filters.level === lvl.key
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-700 text-gray-300'
                     )}
                   >
-                    {level}
+                    {lvl.label}
                   </button>
                 ))}
               </div>
             </div>
             <div>
-              <h3 className="font-semibold text-white mb-2">{t('filters.sortBy')}</h3>
+              <h3 className="font-semibold text-white mb-2">ترتيب حسب</h3>
               <select
                 value={filters.sortBy || 'newest'}
                 onChange={e => handleSortChange(e.target.value)}
@@ -192,7 +205,7 @@ export const CourseFilters: React.FC<CourseFiltersProps> = ({
               >
                 {sortOptions.map(option => (
                   <option key={option.value} value={option.value}>
-                    {t(option.labelKey)}
+                    {option.label}
                   </option>
                 ))}
               </select>
@@ -202,7 +215,7 @@ export const CourseFilters: React.FC<CourseFiltersProps> = ({
                 onClick={clearFilters}
                 className="w-full py-2 px-4 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition-colors"
               >
-                {t('filters.clear')}
+                مسح الفلاتر
               </button>
             )}
           </div>
