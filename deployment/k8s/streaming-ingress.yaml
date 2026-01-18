@@ -1,0 +1,98 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: streaming-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    # WebSocket support
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$request_uri"
+    # Sticky sessions for WebSocket connections
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-name: "vtp-stream-session"
+    nginx.ingress.kubernetes.io/session-cookie-expires: "172800"
+    nginx.ingress.kubernetes.io/session-cookie-max-age: "172800"
+    # SSL redirect
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # CORS
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
+spec:
+  tls:
+  - hosts:
+    - stream.vtp.example.com
+    - api.vtp.example.com
+    secretName: vtp-tls-secret
+  rules:
+  # API backend with Socket.IO
+  - host: api.vtp.example.com
+    http:
+      paths:
+      - path: /socket.io
+        pathType: Prefix
+        backend:
+          service:
+            name: vtp-backend
+            port:
+              number: 8080
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: vtp-backend
+            port:
+              number: 8080
+  # MediaSoup SFU internal API
+  - host: stream.vtp.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: mediasoup-sfu
+            port:
+              number: 3000
+---
+# Network Policy for secure pod-to-pod communication
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: streaming-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      tier: media
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow from API backend
+  - from:
+    - podSelector:
+        matchLabels:
+          app: vtp-backend
+    ports:
+    - protocol: TCP
+      port: 3000
+  # Allow UDP for WebRTC
+  - ports:
+    - protocol: UDP
+      port: 40000
+    - protocol: UDP
+      port: 40100
+  egress:
+  # Allow DNS
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow STUN servers
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 19302

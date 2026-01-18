@@ -4,9 +4,14 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/Bashar444/VTP/pkg/mediasoup"
 	socketio "github.com/googollee/go-socket.io"
+	"github.com/googollee/go-socket.io/engineio"
+	"github.com/googollee/go-socket.io/engineio/transport"
+	"github.com/googollee/go-socket.io/engineio/transport/polling"
+	"github.com/googollee/go-socket.io/engineio/transport/websocket"
 )
 
 // SignallingServer manages WebRTC signalling via Socket.IO
@@ -16,9 +21,26 @@ type SignallingServer struct {
 	Mediasoup   *MediasoupIntegration
 }
 
+// allowOriginFunc allows all origins for development
+var allowOriginFunc = func(r *http.Request) bool {
+	return true
+}
+
 // NewSignallingServer creates a new signalling server
 func NewSignallingServer() (*SignallingServer, error) {
-	server := socketio.NewServer(nil)
+	// Use polling first for better compatibility, then upgrade to websocket
+	server := socketio.NewServer(&engineio.Options{
+		Transports: []transport.Transport{
+			&polling.Transport{
+				CheckOrigin: allowOriginFunc,
+			},
+			&websocket.Transport{
+				CheckOrigin: allowOriginFunc,
+			},
+		},
+		PingTimeout:  60 * time.Second,
+		PingInterval: 25 * time.Second,
+	})
 
 	ss := &SignallingServer{
 		IO:          server,
@@ -33,7 +55,19 @@ func NewSignallingServer() (*SignallingServer, error) {
 
 // NewSignallingServerWithMediasoup creates a signalling server with custom Mediasoup URL
 func NewSignallingServerWithMediasoup(mediasoupURL string) (*SignallingServer, error) {
-	server := socketio.NewServer(nil)
+	// Use polling first for better compatibility, then upgrade to websocket
+	server := socketio.NewServer(&engineio.Options{
+		Transports: []transport.Transport{
+			&polling.Transport{
+				CheckOrigin: allowOriginFunc,
+			},
+			&websocket.Transport{
+				CheckOrigin: allowOriginFunc,
+			},
+		},
+		PingTimeout:  60 * time.Second,
+		PingInterval: 25 * time.Second,
+	})
 
 	ss := &SignallingServer{
 		IO:          server,

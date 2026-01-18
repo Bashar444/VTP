@@ -1,6 +1,6 @@
 # Kubernetes Deployment Configuration for VTP Platform
 
-This directory contains Kubernetes manifests for deploying the VTP platform with horizontal scaling capabilities.
+This directory contains Kubernetes manifests for deploying the VTP platform with horizontal scaling capabilities and **live streaming support via MediaSoup SFU**.
 
 ## Architecture
 
@@ -11,34 +11,48 @@ This directory contains Kubernetes manifests for deploying the VTP platform with
                                |
                          Ingress Controller
                                |
-              +----------------+----------------+
-              |                |                |
-         Backend-1        Backend-2        Backend-3
-         (Deployment: 3+ replicas)
-              |                |                |
-              +----------------+----------------+
+    +-------------+------------+-------------+-------------+
+    |             |            |             |             |
+Backend-1    Backend-2    Backend-3    MediaSoup-1    MediaSoup-2
+(API + WebSocket Signaling)           (WebRTC SFU - Auto-scaled)
+    |             |            |             |             |
+    +-------------+------------+-------------+-------------+
                       |                |
                  PostgreSQL        Redis
               (StatefulSet)    (StatefulSet)
 ```
 
+## Services
+
+| Service | Description | Scaling |
+|---------|-------------|---------|
+| `vtp-backend` | Go API + Socket.IO signaling | HPA: 2-8 pods |
+| `mediasoup-sfu` | WebRTC media forwarding | HPA: 2-10 pods |
+| `postgres` | Primary database | StatefulSet |
+| `redis` | Session/cache store | StatefulSet |
+
 ## Prerequisites
 
-1. **Kubernetes Cluster**: Version 1.20+
+1. **Kubernetes Cluster**: Version 1.20+ (minikube, k3s, EKS, GKE, AKS)
 2. **kubectl**: Configured with cluster access
 3. **Docker Registry**: For storing container images
 4. **Storage**: PersistentVolumes for PostgreSQL and Redis
+5. **Ingress Controller**: nginx-ingress recommended
 
 ## Quick Start
 
 ### 1. Build and Push Docker Image
 
 ```bash
-# Build the backend image
+# Build all images
 docker build -t your-registry.com/vtp-backend:latest .
+docker build -t your-registry.com/vtp-mediasoup:latest ./mediasoup-sfu
+docker build -t your-registry.com/vtp-frontend:latest ./vtp-frontend
 
 # Push to registry
 docker push your-registry.com/vtp-backend:latest
+docker push your-registry.com/vtp-mediasoup:latest
+docker push your-registry.com/vtp-frontend:latest
 ```
 
 ### 2. Configure Secrets
@@ -319,8 +333,67 @@ kubectl delete -f .
 7. **Backups**: Automate database backups with CronJobs
 8. **CDN**: Use CloudFront/Cloudflare for static content
 9. **Security**: Implement NetworkPolicies and PodSecurityPolicies
+10. **TURN Server**: Deploy coturn for NAT traversal in WebRTC
+11. **Media Recording**: Configure S3-compatible storage for stream recordings
+
+## Live Streaming Architecture
+
+### MediaSoup SFU Scaling
+
+```
+Teacher Browser                                Student Browsers
+     |                                              |
+     | (WebRTC)                                     | (WebRTC)
+     v                                              v
++--------------------+    HTTP API    +--------------------+
+|   Go Backend       |<-------------->|   MediaSoup SFU    |
+|   (Socket.IO)      |                |   (2-10 replicas)  |
++--------------------+                +--------------------+
+     |                                       |
+     | (join-room, create-transport)         | (UDP 40000-40100)
+     v                                       v
++--------------------+                +--------------------+
+|   PostgreSQL       |                |   WebRTC Media     |
+|   (session state)  |                |   (video/audio)    |
++--------------------+                +--------------------+
+```
+
+### WebRTC UDP Port Configuration
+
+MediaSoup requires UDP ports for WebRTC media. In Kubernetes:
+
+```yaml
+# NodePort for UDP traffic
+spec:
+  type: NodePort
+  ports:
+  - port: 40000
+    targetPort: 40000
+    protocol: UDP
+    nodePort: 30400
+```
+
+For cloud deployments, consider:
+- **AWS**: Use Network Load Balancer (NLB) for UDP
+- **GCP**: Use Cloud NAT or External TCP/UDP Load Balancer
+- **Azure**: Use Azure Load Balancer with UDP support
 
 ## Files
+
+| File | Description |
+|------|-------------|
+| `backend-deployment.yaml` | Go API deployment |
+| `backend-service.yaml` | API ClusterIP service |
+| `mediasoup-deployment.yaml` | MediaSoup SFU deployment |
+| `streaming-hpa.yaml` | Auto-scaling for streaming services |
+| `streaming-configmap.yaml` | Streaming configuration |
+| `streaming-ingress.yaml` | WebSocket-enabled ingress |
+| `postgres-statefulset.yaml` | Database StatefulSet |
+| `redis-statefulset.yaml` | Cache StatefulSet |
+| `configmap.yaml` | Application configuration |
+| `hpa.yaml` | Horizontal Pod Autoscaler |
+| `ingress.yaml` | Main ingress rules |
+| `deploy.sh` | Automated deployment script |
 
 - `backend-deployment.yaml`: Backend application deployment
 - `backend-service.yaml`: Backend service (ClusterIP)

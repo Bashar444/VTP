@@ -34,7 +34,8 @@ export default class SignalingService {
     this.roomId = roomId;
     this.userId = userId;
     this.token = token;
-    this.baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    // Use dedicated signaling server (Node.js Socket.IO v4)
+    this.baseUrl = process.env.NEXT_PUBLIC_SIGNALING_URL || 'http://localhost:3003';
 
     this.initializeSocket();
   }
@@ -48,10 +49,13 @@ export default class SignalingService {
       auth: {
         token: this.token,
       },
+      // Socket.IO v4 compatible settings
+      transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: 10,
+      timeout: 20000,
     });
 
     this.socket.on('connect', () => {
@@ -66,6 +70,10 @@ export default class SignalingService {
 
     this.socket.on('error', (error: any) => {
       console.error('Signaling error:', error);
+    });
+
+    this.socket.on('connect_error', (error: any) => {
+      console.error('Signaling connect_error:', error);
     });
   }
 

@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mediasoup-sfu
+  labels:
+    app: mediasoup-sfu
+    tier: media
+spec:
+  replicas: 2  # Start with 2 replicas for HA
+  selector:
+    matchLabels:
+      app: mediasoup-sfu
+  template:
+    metadata:
+      labels:
+        app: mediasoup-sfu
+        tier: media
+    spec:
+      containers:
+      - name: mediasoup-sfu
+        image: vtp-mediasoup-sfu:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+          name: http
+        - containerPort: 40000
+          protocol: UDP
+          name: rtc-start
+        # UDP port range for WebRTC
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3000"
+        - name: LOG_LEVEL
+          value: "info"
+        - name: MEDIASOUP_LISTEN_IP
+          value: "0.0.0.0"
+        - name: MEDIASOUP_ANNOUNCED_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: MEDIASOUP_MIN_PORT
+          value: "40000"
+        - name: MEDIASOUP_MAX_PORT
+          value: "40100"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      # Prefer scheduling on different nodes for HA
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - mediasoup-sfu
+              topologyKey: kubernetes.io/hostname
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mediasoup-sfu
+  labels:
+    app: mediasoup-sfu
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    name: http
+  selector:
+    app: mediasoup-sfu
+---
+# NodePort service for UDP WebRTC traffic
+apiVersion: v1
+kind: Service
+metadata:
+  name: mediasoup-sfu-udp
+  labels:
+    app: mediasoup-sfu
+spec:
+  type: NodePort
+  ports:
+  - port: 40000
+    targetPort: 40000
+    protocol: UDP
+    nodePort: 30400
+    name: rtc
+  selector:
+    app: mediasoup-sfu

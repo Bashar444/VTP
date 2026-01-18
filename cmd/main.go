@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	_ "net/http/pprof"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/Bashar444/VTP/pkg/admin"
 	"github.com/Bashar444/VTP/pkg/assignment"
@@ -19,6 +19,7 @@ import (
 	"github.com/Bashar444/VTP/pkg/db"
 	"github.com/Bashar444/VTP/pkg/email"
 	"github.com/Bashar444/VTP/pkg/instructor"
+	"github.com/Bashar444/VTP/pkg/livestream"
 	"github.com/Bashar444/VTP/pkg/material"
 	"github.com/Bashar444/VTP/pkg/meeting"
 	"github.com/Bashar444/VTP/pkg/middleware"
@@ -176,7 +177,15 @@ func main() {
 	log.Println("      ✓ Auth handlers")
 	log.Println("      ✓ Auth middleware") // 3b. Initialize Signalling Server (Phase 1b)
 	log.Println("\n[3b/5] Initializing WebRTC signalling server...")
-	sigServer, err := signalling.NewSignallingServer()
+
+	// Get MediaSoup URL from environment or use default
+	mediasoupURL := os.Getenv("MEDIASOUP_URL")
+	if mediasoupURL == "" {
+		mediasoupURL = "http://localhost:3000"
+	}
+	log.Printf("      Using MediaSoup SFU URL: %s", mediasoupURL)
+
+	sigServer, err := signalling.NewSignallingServerWithMediasoup(mediasoupURL)
 	if err != nil {
 		log.Printf("⚠ Warning: Failed to initialize signalling server: %v", err)
 		log.Println("      WebRTC/live streaming features will be disabled")
@@ -184,6 +193,7 @@ func main() {
 	} else {
 		log.Println("      ✓ Socket.IO server initialized")
 		log.Println("      ✓ Room manager initialized")
+		log.Println("      ✓ MediaSoup integration initialized")
 		log.Println("      ✓ Signalling handlers registered")
 	}
 
@@ -341,6 +351,27 @@ func main() {
 		log.Println("\n[3d2-5/7] Skipping instructor/subject/meeting/material services (no database)")
 	}
 
+	// 3d10. Initialize Live Streaming Service
+	var livestreamHandlers *livestream.Handler
+	var chatHandlers *livestream.ChatHandler
+
+	if database != nil {
+		log.Println("\n[3d10/7] Initializing live streaming service...")
+		livestreamRepo := livestream.NewRepository(database.Conn())
+		livestreamService := livestream.NewService(livestreamRepo, log.New(os.Stderr, "[LiveStream] ", log.LstdFlags))
+		livestreamHandlers = livestream.NewHandler(livestreamService, log.New(os.Stderr, "[LiveStreamAPI] ", log.LstdFlags), tokenService)
+
+		// Initialize chat service
+		chatRepo := livestream.NewChatRepository(database.Conn())
+		chatHandlers = livestream.NewChatHandler(chatRepo, livestreamRepo, log.New(os.Stderr, "[ChatAPI] ", log.LstdFlags), tokenService)
+
+		log.Println("      ✓ Live streaming repository initialized")
+		log.Println("      ✓ Live streaming service initialized")
+		log.Println("      ✓ Live streaming handlers initialized")
+		log.Println("      ✓ Chat repository initialized")
+		log.Println("      ✓ Chat handlers initialized")
+	}
+
 	// 3e. Initialize Adaptive Bitrate (ABR) Engine (Phase 2B)
 	log.Println("\n[3e/5] Initializing adaptive bitrate (ABR) streaming engine...")
 	abrConfig := streaming.ABRConfig{
@@ -423,34 +454,30 @@ func main() {
 	})
 	log.Println("      ✓ GET /health")
 
-	// Performance profiling endpoints (pprof)
-	// Available at: /debug/pprof/
-	log.Println("      ✓ GET /debug/pprof/ (profiling endpoints)")
-	log.Println("        - /debug/pprof/heap (memory)")
-	log.Println("        - /debug/pprof/goroutine (goroutines)")
-	log.Println("        - /debug/pprof/profile (CPU - 30s)")
-	log.Println("        - /debug/pprof/trace (execution trace)")
+	// Initialize rate limiter for auth endpoints (5 requests per minute per IP)
+	authRateLimiter := middleware.NewRateLimiter(5, time.Minute)
+	log.Println("      ✓ Rate limiter initialized (5 req/min for auth endpoints)")
 
-	// Authentication endpoints (public)
-	http.HandleFunc("/api/v1/auth/register", authHandler.RegisterHandler)
-	log.Println("      ✓ POST /api/v1/auth/register")
+	// Authentication endpoints (public, rate limited)
+	http.HandleFunc("/api/v1/auth/register", authRateLimiter.Middleware(authHandler.RegisterHandler))
+	log.Println("      ✓ POST /api/v1/auth/register (rate limited)")
 
-	http.HandleFunc("/api/v1/auth/login", authHandler.LoginHandler)
-	log.Println("      ✓ POST /api/v1/auth/login")
+	http.HandleFunc("/api/v1/auth/login", authRateLimiter.Middleware(authHandler.LoginHandler))
+	log.Println("      ✓ POST /api/v1/auth/login (rate limited)")
 
-	http.HandleFunc("/api/v1/auth/refresh", authHandler.RefreshHandler)
-	log.Println("      ✓ POST /api/v1/auth/refresh")
+	http.HandleFunc("/api/v1/auth/refresh", authRateLimiter.Middleware(authHandler.RefreshHandler))
+	log.Println("      ✓ POST /api/v1/auth/refresh (rate limited)")
 
-	// Password reset endpoints (public)
+	// Password reset endpoints (public, rate limited)
 	if passwordResetHandler != nil {
-		http.HandleFunc("/api/v1/auth/forgot-password", passwordResetHandler.RequestPasswordReset)
-		log.Println("      ✓ POST /api/v1/auth/forgot-password")
+		http.HandleFunc("/api/v1/auth/forgot-password", authRateLimiter.Middleware(passwordResetHandler.RequestPasswordReset))
+		log.Println("      ✓ POST /api/v1/auth/forgot-password (rate limited)")
 
-		http.HandleFunc("/api/v1/auth/verify-reset-token", passwordResetHandler.VerifyResetToken)
-		log.Println("      ✓ POST /api/v1/auth/verify-reset-token")
+		http.HandleFunc("/api/v1/auth/verify-reset-token", authRateLimiter.Middleware(passwordResetHandler.VerifyResetToken))
+		log.Println("      ✓ POST /api/v1/auth/verify-reset-token (rate limited)")
 
-		http.HandleFunc("/api/v1/auth/reset-password", passwordResetHandler.ResetPassword)
-		log.Println("      ✓ POST /api/v1/auth/reset-password")
+		http.HandleFunc("/api/v1/auth/reset-password", authRateLimiter.Middleware(passwordResetHandler.ResetPassword))
+		log.Println("      ✓ POST /api/v1/auth/reset-password (rate limited)")
 	}
 
 	// Protected endpoints (require authentication)
@@ -497,6 +524,14 @@ func main() {
 
 	// Signalling endpoints (WebRTC) - only if signalling server initialized
 	if sigServer != nil && sigAPIHandler != nil {
+		// Start the Socket.IO server in a goroutine (required for go-socket.io)
+		go func() {
+			if err := sigServer.IO.Serve(); err != nil {
+				log.Printf("❌ Socket.IO server error: %v", err)
+			}
+		}()
+		defer sigServer.IO.Close()
+
 		http.Handle("/socket.io/", sigServer)
 		log.Println("      ✓ WebSocket /socket.io/ (WebRTC signalling)")
 
@@ -572,43 +607,7 @@ func main() {
 		})
 		log.Println("      ✓ GET /api/v1/streaming/rooms/{roomId}/participants")
 		log.Println("      ✓ POST /api/v1/streaming/rooms/{roomId}/record")
-
-		http.HandleFunc("/api/v1/streaming/sessions/", func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			path := r.URL.Path // /api/v1/streaming/sessions/{id}/stop-record or /metrics
-			prefix := "/api/v1/streaming/sessions/"
-			if len(path) <= len(prefix) {
-				http.NotFound(w, r)
-				return
-			}
-			rest := path[len(prefix):]
-			sessionID := rest
-			action := ""
-			for i := 0; i < len(rest); i++ {
-				if rest[i] == '/' {
-					sessionID = rest[:i]
-					action = rest[i+1:]
-					break
-				}
-			}
-
-			if action == "stop-record" && r.Method == http.MethodPost {
-				json.NewEncoder(w).Encode(map[string]interface{}{
-					"sessionId": sessionID,
-					"status":    "stopped",
-				})
-				return
-			}
-
-			if action == "metrics" && r.Method == http.MethodPost {
-				w.WriteHeader(http.StatusNoContent)
-				return
-			}
-
-			http.NotFound(w, r)
-		})
-		log.Println("      ✓ POST /api/v1/streaming/sessions/{sessionId}/stop-record")
-		log.Println("      ✓ POST /api/v1/streaming/sessions/{sessionId}/metrics")
+		// Note: streaming sessions endpoints are now handled by livestreamHandlers below
 	} else {
 		log.Println("      ⚠ WebRTC signalling endpoints disabled")
 	}
@@ -658,6 +657,34 @@ func main() {
 		log.Println("      ✓ POST /api/v1/courses/{id}/permissions")
 		log.Println("      ✓ GET /api/v1/courses/{id}/permissions/{user_id}")
 		log.Println("      ✓ GET /api/v1/courses/{id}/stats")
+	}
+
+	// Live Streaming endpoints - only if database available
+	if livestreamHandlers != nil {
+		// Set chat handler if available
+		if chatHandlers != nil {
+			livestreamHandlers.SetChatHandler(chatHandlers)
+		}
+		livestreamHandlers.RegisterRoutes(http.DefaultServeMux)
+		log.Println("      ✓ POST /api/v1/streaming/sessions (create)")
+		log.Println("      ✓ GET /api/v1/streaming/sessions (list)")
+		log.Println("      ✓ POST /api/v1/streaming/sessions/start (create and start)")
+		log.Println("      ✓ GET /api/v1/streaming/sessions/live (live sessions)")
+		log.Println("      ✓ GET /api/v1/streaming/sessions/{id}")
+		log.Println("      ✓ POST /api/v1/streaming/sessions/{id}/start")
+		log.Println("      ✓ POST /api/v1/streaming/sessions/{id}/stop")
+		log.Println("      ✓ POST /api/v1/streaming/sessions/{id}/join")
+		log.Println("      ✓ POST /api/v1/streaming/sessions/{id}/leave")
+		log.Println("      ✓ GET /api/v1/streaming/sessions/{id}/participants")
+		log.Println("      ✓ POST /api/v1/streaming/sessions/{id}/recording/start")
+		log.Println("      ✓ POST /api/v1/streaming/sessions/{id}/recording/stop")
+		// Chat endpoints (integrated)
+		log.Println("      ✓ POST /api/v1/streaming/sessions/{id}/chat")
+		log.Println("      ✓ GET /api/v1/streaming/sessions/{id}/chat")
+		log.Println("      ✓ GET /api/v1/streaming/sessions/{id}/chat/questions")
+		log.Println("      ✓ GET /api/v1/streaming/sessions/{id}/chat/pinned")
+		log.Println("      ✓ POST /api/v1/streaming/sessions/{id}/chat/{msgId}/pin")
+		log.Println("      ✓ POST /api/v1/streaming/sessions/{id}/chat/{msgId}/answer")
 	}
 
 	// Instructor management endpoints (Phase 3+) - only if database available

@@ -130,7 +130,7 @@ export default function AdminDashboardPage() {
             </div>
           </Link>
           <Link
-            href="/stream"
+            href="/instructor/streaming"
             className="bg-white rounded-lg shadow p-6 hover:shadow-md transition flex items-center gap-4"
           >
             <div className="bg-purple-100 p-3 rounded-full">
@@ -138,7 +138,7 @@ export default function AdminDashboardPage() {
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">البث المباشر</h3>
-              <p className="text-sm text-gray-500">مراقبة البثوث النشطة</p>
+              <p className="text-sm text-gray-500">إنشاء وإدارة البثوث المباشرة</p>
             </div>
           </Link>
         </div>

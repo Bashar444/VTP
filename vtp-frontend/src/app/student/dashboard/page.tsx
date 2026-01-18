@@ -245,7 +245,14 @@ export default function StudentDashboardPage() {
         {/* Quick Actions */}
         <div className="mt-8 bg-white rounded-xl shadow p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">🚀 إجراءات سريعة</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <Link
+              href="/student/streams"
+              className="flex flex-col items-center p-4 border-2 border-red-200 bg-red-50 rounded-lg hover:bg-red-100"
+            >
+              <span className="text-3xl mb-2">🔴</span>
+              <span className="text-red-700 font-medium">بث مباشر</span>
+            </Link>
             <Link
               href="/courses"
               className="flex flex-col items-center p-4 border rounded-lg hover:bg-gray-50"

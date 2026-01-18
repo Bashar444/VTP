@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: streaming-config
+data:
+  # MediaSoup SFU Configuration
+  MEDIASOUP_LISTEN_IP: "0.0.0.0"
+  MEDIASOUP_MIN_PORT: "40000"
+  MEDIASOUP_MAX_PORT: "40100"
+  LOG_LEVEL: "info"
+  
+  # WebRTC TURN/STUN servers (for NAT traversal)
+  STUN_SERVERS: |
+    [
+      {"urls": "stun:stun.l.google.com:19302"},
+      {"urls": "stun:stun1.l.google.com:19302"}
+    ]
+  
+  # Video quality presets
+  VIDEO_QUALITY_PRESETS: |
+    {
+      "low": {"width": 640, "height": 360, "bitrate": 500000},
+      "medium": {"width": 1280, "height": 720, "bitrate": 1500000},
+      "high": {"width": 1920, "height": 1080, "bitrate": 4000000}
+    }
+  
+  # Audio settings
+  AUDIO_CODEC: "opus"
+  AUDIO_SAMPLE_RATE: "48000"
+  AUDIO_CHANNELS: "2"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: streaming-secrets
+type: Opaque
+stringData:
+  # TURN server credentials (if using your own TURN server)
+  TURN_USERNAME: "vtp-turn-user"
+  TURN_PASSWORD: "change-this-in-production"

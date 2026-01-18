@@ -48,22 +48,15 @@ func (h *PasswordResetHandler) RequestPasswordReset(w http.ResponseWriter, r *ht
 	ipAddress := getClientIP(r)
 	userAgent := r.UserAgent()
 
-	token, err := h.service.RequestPasswordReset(r.Context(), req.Email, ipAddress, userAgent)
+	_, err := h.service.RequestPasswordReset(r.Context(), req.Email, ipAddress, userAgent)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to process request")
 		return
 	}
 
 	// In production, send email with token
-	// For now, return token in response (remove in production!)
 	response := map[string]string{
 		"message": "If the email exists, a password reset link has been sent",
-	}
-
-	// TODO: Remove this in production - only for testing
-	if token != "" {
-		response["token"] = token // Only for development
-		response["reset_url"] = "/reset-password?token=" + token
 	}
 
 	respondJSON(w, http.StatusOK, response)

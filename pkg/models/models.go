@@ -293,3 +293,65 @@ type ClassSchedule struct {
 	SchoolTermID   string    `db:"school_term_id" json:"school_term_id"`
 	CreatedAt      time.Time `db:"created_at" json:"created_at"`
 }
+
+// StreamingSession represents a live streaming session
+type StreamingSession struct {
+	ID              string     `db:"id" json:"id"`
+	RoomID          string     `db:"room_id" json:"room_id"`
+	InstructorID    string     `db:"instructor_id" json:"instructor_id"`
+	CourseID        *string    `db:"course_id" json:"course_id"`
+	Title           string     `db:"title" json:"title"`
+	Description     string     `db:"description" json:"description"`
+	Status          string     `db:"status" json:"status"` // scheduled, live, ended, cancelled
+	ScheduledAt     *time.Time `db:"scheduled_at" json:"scheduled_at"`
+	StartedAt       *time.Time `db:"started_at" json:"started_at"`
+	EndedAt         *time.Time `db:"ended_at" json:"ended_at"`
+	MaxParticipants int        `db:"max_participants" json:"max_participants"`
+	IsRecording     bool       `db:"is_recording" json:"is_recording"`
+	RecordingID     *string    `db:"recording_id" json:"recording_id"`
+	Settings        string     `db:"settings" json:"settings"` // JSON
+	CreatedAt       time.Time  `db:"created_at" json:"created_at"`
+	UpdatedAt       time.Time  `db:"updated_at" json:"updated_at"`
+}
+
+// StreamingParticipant represents a user participating in a stream
+type StreamingParticipant struct {
+	ID             string     `db:"id" json:"id"`
+	SessionID      string     `db:"session_id" json:"session_id"`
+	UserID         string     `db:"user_id" json:"user_id"`
+	Role           string     `db:"role" json:"role"` // host, co-host, viewer
+	JoinedAt       time.Time  `db:"joined_at" json:"joined_at"`
+	LeftAt         *time.Time `db:"left_at" json:"left_at"`
+	IsMuted        bool       `db:"is_muted" json:"is_muted"`
+	IsVideoEnabled bool       `db:"is_video_enabled" json:"is_video_enabled"`
+	IsHandRaised   bool       `db:"is_hand_raised" json:"is_hand_raised"`
+	WatchDuration  int        `db:"watch_duration" json:"watch_duration"` // seconds
+	CreatedAt      time.Time  `db:"created_at" json:"created_at"`
+}
+
+// StreamChatMessage represents a chat message in a stream
+type StreamChatMessage struct {
+	ID          string    `db:"id" json:"id"`
+	SessionID   string    `db:"session_id" json:"session_id"`
+	UserID      string    `db:"user_id" json:"user_id"`
+	MessageType string    `db:"message_type" json:"message_type"` // text, question, announcement, system
+	Content     string    `db:"content" json:"content"`
+	IsPinned    bool      `db:"is_pinned" json:"is_pinned"`
+	IsAnswered  bool      `db:"is_answered" json:"is_answered"`
+	ReplyToID   *string   `db:"reply_to_id" json:"reply_to_id"`
+	CreatedAt   time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt   time.Time `db:"updated_at" json:"updated_at"`
+}
+
+// StreamRecording represents a recorded stream
+type StreamRecording struct {
+	ID           string    `db:"id" json:"id"`
+	SessionID    string    `db:"session_id" json:"session_id"`
+	FileURL      string    `db:"file_url" json:"file_url"`
+	FileSize     int64     `db:"file_size" json:"file_size"`
+	Duration     int       `db:"duration" json:"duration"` // seconds
+	Format       string    `db:"format" json:"format"`
+	ThumbnailURL string    `db:"thumbnail_url" json:"thumbnail_url"`
+	IsProcessed  bool      `db:"is_processed" json:"is_processed"`
+	CreatedAt    time.Time `db:"created_at" json:"created_at"`
+}
