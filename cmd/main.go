@@ -377,19 +377,26 @@ func main() {
 		videoIntegrationRepo := videointegration.NewRepository(database.Conn())
 		videoIntegrationService := videointegration.NewService(videoIntegrationRepo, log.New(os.Stderr, "[VideoIntegration] ", log.LstdFlags))
 
-		// Register Jitsi provider
-		jitsiURL := os.Getenv("JITSI_SERVER_URL")
-		if jitsiURL == "" {
-			jitsiURL = "https://meet.jit.si"
+		// Use ProviderFactory to initialize all configured providers
+		providerFactory := videointegration.NewProviderFactory(log.New(os.Stderr, "[VideoProviders] ", log.LstdFlags))
+		if err := providerFactory.InitializeProviders(); err != nil {
+			log.Printf("Warning: Error initializing video providers: %v", err)
 		}
-		jitsiProvider := videointegration.NewJitsiProvider(jitsiURL, log.New(os.Stderr, "[Jitsi] ", log.LstdFlags))
-		videoIntegrationService.RegisterProvider(videointegration.ProviderJitsi, jitsiProvider)
+
+		// Register all available providers with the service
+		providerFactory.RegisterAllWithService(videoIntegrationService)
+
+		// Log available providers
+		availableProviders := providerFactory.GetAvailableProviders()
+		log.Printf("      ✓ Registered %d video provider(s):", len(availableProviders))
+		for _, p := range availableProviders {
+			log.Printf("        - %s", p)
+		}
 
 		videoIntegrationHandlers = videointegration.NewHandler(videoIntegrationService)
 
 		log.Println("      ✓ Video integration repository initialized")
-		log.Println("      ✓ Video integration service initialized (Jitsi/Meet/Zoom)")
-		log.Println("      ✓ Jitsi provider registered")
+		log.Println("      ✓ Video integration service initialized")
 		log.Println("      ✓ Video integration handlers initialized")
 	} else {
 		log.Println("\n[3d2-5/7] Skipping instructor/subject/meeting/material services (no database)")
