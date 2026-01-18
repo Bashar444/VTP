@@ -7,23 +7,22 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Bashar444/VTP/pkg/testutil"
 	"github.com/google/uuid"
 )
 
-// Helper to create test database connection
+// Helper to create test database connection using testcontainers
 func setupTestDB(t *testing.T) *sql.DB {
-	// For now, we'll skip actual DB tests
-	// In production, use testcontainers or test database
-	t.Skip("Requires database setup")
-	return nil
+	// Skip if Docker is not available
+	testutil.SkipIfNoDocker(t)
+
+	// Create a PostgreSQL container with migrations applied
+	pc := testutil.NewPostgresContainer(t)
+	return pc.DB
 }
 
 func TestStartRecording(t *testing.T) {
 	db := setupTestDB(t)
-	if db == nil {
-		t.Skip("Database not available")
-	}
-	defer db.Close()
 
 	logger := log.New(log.Writer(), "[TEST] ", log.LstdFlags)
 	service := NewRecordingService(db, logger)
@@ -66,7 +65,6 @@ func TestStartRecording(t *testing.T) {
 
 func TestStartRecordingValidation(t *testing.T) {
 	// Note: Validation tests that don't require DB can still run
-	// But tests that hit the DB need a proper setup
 
 	tests := []struct {
 		name    string
@@ -119,10 +117,6 @@ func TestStartRecordingValidation(t *testing.T) {
 
 func TestStopRecording(t *testing.T) {
 	db := setupTestDB(t)
-	if db == nil {
-		t.Skip("Database not available")
-	}
-	defer db.Close()
 
 	logger := log.New(log.Writer(), "[TEST] ", log.LstdFlags)
 	service := NewRecordingService(db, logger)
@@ -168,10 +162,6 @@ func TestStopRecording(t *testing.T) {
 
 func TestGetRecording(t *testing.T) {
 	db := setupTestDB(t)
-	if db == nil {
-		t.Skip("Database not available")
-	}
-	defer db.Close()
 
 	logger := log.New(log.Writer(), "[TEST] ", log.LstdFlags)
 	service := NewRecordingService(db, logger)
@@ -210,10 +200,6 @@ func TestGetRecording(t *testing.T) {
 
 func TestGetRecordingNotFound(t *testing.T) {
 	db := setupTestDB(t)
-	if db == nil {
-		t.Skip("Database not available")
-	}
-	defer db.Close()
 
 	logger := log.New(log.Writer(), "[TEST] ", log.LstdFlags)
 	service := NewRecordingService(db, logger)
@@ -231,10 +217,6 @@ func TestGetRecordingNotFound(t *testing.T) {
 
 func TestListRecordings(t *testing.T) {
 	db := setupTestDB(t)
-	if db == nil {
-		t.Skip("Database not available")
-	}
-	defer db.Close()
 
 	logger := log.New(log.Writer(), "[TEST] ", log.LstdFlags)
 	service := NewRecordingService(db, logger)
@@ -246,7 +228,7 @@ func TestListRecordings(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		req := &StartRecordingRequest{
 			RoomID: roomID,
-			Title:  "Test Recording " + string(rune(i)),
+			Title:  "Test Recording " + string(rune('A'+i)),
 		}
 		_, err := service.StartRecording(context.Background(), req, userID)
 		if err != nil {
@@ -277,10 +259,6 @@ func TestListRecordings(t *testing.T) {
 
 func TestListRecordingsPagination(t *testing.T) {
 	db := setupTestDB(t)
-	if db == nil {
-		t.Skip("Database not available")
-	}
-	defer db.Close()
 
 	logger := log.New(log.Writer(), "[TEST] ", log.LstdFlags)
 	service := NewRecordingService(db, logger)
@@ -334,10 +312,6 @@ func TestListRecordingsPagination(t *testing.T) {
 
 func TestDeleteRecording(t *testing.T) {
 	db := setupTestDB(t)
-	if db == nil {
-		t.Skip("Database not available")
-	}
-	defer db.Close()
 
 	logger := log.New(log.Writer(), "[TEST] ", log.LstdFlags)
 	service := NewRecordingService(db, logger)
@@ -376,10 +350,6 @@ func TestDeleteRecording(t *testing.T) {
 
 func TestUpdateRecordingStatus(t *testing.T) {
 	db := setupTestDB(t)
-	if db == nil {
-		t.Skip("Database not available")
-	}
-	defer db.Close()
 
 	logger := log.New(log.Writer(), "[TEST] ", log.LstdFlags)
 	service := NewRecordingService(db, logger)
