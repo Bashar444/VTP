@@ -1,0 +1,128 @@
+# DigitalOcean App Platform Specification
+# VTP Platform - Educational Video Streaming
+#
+# Deploy via DigitalOcean Dashboard or CLI:
+#   doctl apps create --spec deployment/digitalocean/app.yaml
+#
+# Estimated Cost: $35-52/month (covered by $100 GitHub Education credit)
+
+name: vtp-platform
+region: nyc
+
+services:
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Main Go Backend API
+  # ═══════════════════════════════════════════════════════════════════════════
+  - name: api
+    github:
+      repo: Bashar444/VTP
+      branch: main
+      deploy_on_push: true
+    dockerfile_path: Dockerfile
+    http_port: 8080
+    instance_size_slug: basic-xxs  # $5/month
+    instance_count: 1
+    routes:
+      - path: /
+    envs:
+      # Database (auto-injected from managed database)
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${db.DATABASE_URL}
+      
+      # Redis (auto-injected from managed Redis)
+      - key: REDIS_URL
+        scope: RUN_TIME
+        value: ${redis.DATABASE_URL}
+      
+      # Security - SET THIS IN DASHBOARD AS SECRET
+      - key: JWT_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      
+      # CORS - Your Vercel frontend URL
+      - key: CORS_ORIGINS
+        scope: RUN_TIME
+        value: "https://vtp-mu.vercel.app,https://vtp.vercel.app"
+      
+      # Frontend URL for redirects
+      - key: FRONTEND_URL
+        scope: RUN_TIME
+        value: "https://vtp-mu.vercel.app"
+      
+      # Jitsi (free video provider)
+      - key: JITSI_SERVER_URL
+        scope: RUN_TIME
+        value: "https://meet.jit.si"
+      
+      # Environment
+      - key: NODE_ENV
+        scope: RUN_TIME
+        value: "production"
+      
+      - key: PORT
+        scope: RUN_TIME
+        value: "8080"
+
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 10
+      period_seconds: 30
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Signaling Server for WebRTC
+  # ═══════════════════════════════════════════════════════════════════════════
+  - name: signaling
+    github:
+      repo: Bashar444/VTP
+      branch: main
+      deploy_on_push: true
+    source_dir: signaling-server
+    dockerfile_path: signaling-server/Dockerfile
+    http_port: 3003
+    instance_size_slug: basic-xxs  # $5/month
+    instance_count: 1
+    routes:
+      - path: /signaling
+    envs:
+      - key: PORT
+        scope: RUN_TIME
+        value: "3003"
+      
+      - key: JWT_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      
+      - key: ALLOWED_ORIGINS
+        scope: RUN_TIME
+        value: "https://vtp-mu.vercel.app,https://vtp.vercel.app"
+      
+      - key: LOG_LEVEL
+        scope: RUN_TIME
+        value: "info"
+
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 5
+      period_seconds: 30
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Managed Databases
+# ═══════════════════════════════════════════════════════════════════════════
+databases:
+  # PostgreSQL - Primary Database
+  - name: db
+    engine: PG
+    version: "15"
+    size: db-s-1vcpu-1gb  # $15/month
+    num_nodes: 1
+
+  # Redis - Caching and Sessions
+  - name: redis
+    engine: REDIS
+    version: "7"
+    size: db-s-1vcpu-1gb  # $15/month
+    num_nodes: 1
