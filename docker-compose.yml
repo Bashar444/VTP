@@ -10,11 +10,11 @@ services:
     image: postgres:15-alpine
     container_name: vtp-postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: vtp_db
-      # إعدادات الأداء للجهاز المحلي
-      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=ar_SY.UTF-8"
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-vtp_db}
+      # UTF-8 encoding supports Arabic text
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
     ports:
       - "5432:5432"
     volumes:
@@ -66,16 +66,23 @@ services:
       dockerfile: Dockerfile
     container_name: vtp-api
     environment:
-      DATABASE_URL: "postgres://postgres:postgres@postgres:5432/vtp_db?sslmode=disable"
-      REDIS_URL: "redis://redis:6379"
+      DATABASE_URL: ${DATABASE_URL:-postgres://postgres:postgres@postgres:5432/vtp_db?sslmode=disable}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       PORT: "8080"
-      JWT_SECRET: "vtp-local-dev-secret-change-in-production"
-      JWT_EXPIRY_HOURS: "24"
-      JWT_REFRESH_EXPIRY_HOURS: "168"
-      JITSI_SERVER_URL: "https://meet.jit.si"
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_EXPIRY_HOURS: ${JWT_EXPIRY_HOURS:-24}
+      JWT_REFRESH_EXPIRY_HOURS: ${JWT_REFRESH_EXPIRY_HOURS:-168}
+      JITSI_SERVER_URL: ${JITSI_SERVER_URL:-https://meet.jit.si}
       MEDIASOUP_URL: "http://mediasoup-sfu:3000"
-      NODE_ENV: production
-      CORS_ORIGINS: "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3001"
+      CDN_URL: ${CDN_URL:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      FROM_EMAIL: ${FROM_EMAIL:-}
+      RESET_BASE_URL: ${RESET_BASE_URL:-}
+      NODE_ENV: ${NODE_ENV:-production}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:3001,http://127.0.0.1:3001}
     ports:
       - "8080:8080"
     depends_on:
@@ -169,8 +176,8 @@ services:
     environment:
       PORT: "3003"
       MEDIASOUP_URL: "http://mediasoup-sfu:3000"
-      JWT_SECRET: "vtp-local-dev-secret-change-in-production"
-      ALLOWED_ORIGINS: "http://localhost:3001,http://localhost:8080,http://127.0.0.1:3001"
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      ALLOWED_ORIGINS: ${CORS_ORIGINS:-http://localhost:3001,http://localhost:8080,http://127.0.0.1:3001}
       LOG_LEVEL: "info"
     ports:
       - "3003:3003"
@@ -198,8 +205,8 @@ services:
     image: dpage/pgadmin4:latest
     container_name: vtp-pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@vtp.local
-      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@vtp.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
     ports:
       - "5050:80"
     depends_on:

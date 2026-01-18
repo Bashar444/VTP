@@ -67,9 +67,53 @@ func getFFmpegPath() string {
 	return ""
 }
 
+// validateRequiredEnvVars checks that critical environment variables are set
+func validateRequiredEnvVars() {
+	var missing []string
+
+	// JWT_SECRET is required for security
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		missing = append(missing, "JWT_SECRET")
+	} else if len(jwtSecret) < 32 {
+		log.Println("⚠ WARNING: JWT_SECRET should be at least 32 characters for security")
+	}
+
+	// DATABASE_URL is required (unless RAILWAY_DATABASE_URL is set)
+	dbURL := os.Getenv("DATABASE_URL")
+	railwayDBURL := os.Getenv("RAILWAY_DATABASE_URL")
+	if dbURL == "" && railwayDBURL == "" {
+		log.Println("⚠ WARNING: DATABASE_URL not set, using default local database")
+	}
+
+	if len(missing) > 0 {
+		log.Println("═══════════════════════════════════════════════════════════════")
+		log.Println("  ❌ FATAL: Missing required environment variables:")
+		for _, v := range missing {
+			log.Printf("     - %s", v)
+		}
+		log.Println("")
+		log.Println("  Please set these variables in your .env file or environment.")
+		log.Println("  See .env.example for reference.")
+		log.Println("═══════════════════════════════════════════════════════════════")
+		os.Exit(1)
+	}
+
+	// Warn about optional but recommended variables
+	if os.Getenv("SMTP_HOST") == "" {
+		log.Println("⚠ INFO: SMTP not configured - password reset emails will not be sent")
+	}
+	if os.Getenv("CDN_URL") == "" {
+		log.Println("⚠ INFO: CDN_URL not set - streaming will use direct server delivery")
+	}
+}
+
 func main() {
 	// Load environment variables from .env file
 	_ = godotenv.Load()
+
+	// Validate required environment variables
+	validateRequiredEnvVars()
 
 	// Log startup
 	log.Println("═══════════════════════════════════════════════════════════════")
@@ -401,11 +445,15 @@ func main() {
 	// 3g. Initialize Live Distribution Network (Phase 2B Day 3)
 	log.Println("\n[3g/7] Initializing live distribution network...")
 	distributionService := streaming.NewDistributionService(4, log.New(os.Stderr, "[Distribution] ", log.LstdFlags))
-	distributionService.EnableCDN("https://cdn.example.com")
+	if cdnURL := os.Getenv("CDN_URL"); cdnURL != "" {
+		distributionService.EnableCDN(cdnURL)
+		log.Printf("      ✓ CDN integration enabled: %s", cdnURL)
+	} else {
+		log.Println("      ⚠ CDN not configured (using direct delivery)")
+	}
 	distributionHandlers := streaming.NewDistributionHandlers(distributionService)
 
 	log.Println("      ✓ Distribution service initialized (4 workers)")
-	log.Println("      ✓ CDN integration enabled")
 	log.Println("      ✓ Distribution handlers registered")
 
 	// 4. Register HTTP Routes

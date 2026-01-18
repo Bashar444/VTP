@@ -70,7 +70,7 @@ func NewDistributionService(workerCount int, logger *log.Logger) *DistributionSe
 		stopChan:     make(chan bool),
 		logger:       logger,
 		cdnEnabled:   false,
-		cdnEndpoint:  "https://cdn.example.com",
+		cdnEndpoint:  "", // Set via EnableCDN()
 	}
 
 	// Start worker goroutines
